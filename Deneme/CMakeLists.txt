@@ -1,0 +1,1 @@
+add_executable(deneme_program main.c)
