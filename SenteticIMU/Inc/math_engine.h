@@ -35,12 +35,14 @@ typedef struct {
 } EulerAngles_t;
 
 typedef struct {
-    Vector3_t position;      // Konum (X, Y, Z) - Metre [m]
-    Vector3_t velocity;      // Doğrusal Hız (Vx, Vy, Vz) - Metre/saniye [m/s]
-    Vector3_t acceleration;  // Gerçek İvme (Ax, Ay, Az) - Metre/saniye kare [m/s^2]
-    
-    Quaternion_t orientation;// Uzaydaki Yönelim (Gimbal lock'suz açı tutucu)
-    Vector3_t angular_rate;  // Açısal Hız - Gövde ekseninde p,q,r (Radyan/saniye) [rad/s]
+    Vector3_t position;           // Konum [m]
+    Vector3_t velocity;           // Hız [m/s]
+    Vector3_t acceleration;       // İvme [m/s^2]
+
+    Quaternion_t orientation;     // Açısal Konum (Quarterniyon)
+    Vector3_t angular_rate;       // Açısal Hız (p, q, r) [rad/s]
+
+    EulerAngles_t euler_angles;   // Açısal konum (Roll, Pitch, Yaw)
 } KinematicState_t;
 
 /* ==========================================================================

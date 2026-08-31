@@ -2,22 +2,19 @@
 #include <stdlib.h>
 #include <math.h>
 
+// Pi Sayısı
 #ifndef M_PI
     #define M_PI 3.14159265358979323846f
 #endif
 
-// Yerçekimi sabiti (Bulunduğun konuma göre ufak revizeler yapılabilir)
+// Yerçekimi sabiti 
 #define GRAVITY 9.80665f 
 
-/* 
- * KAPSÜLLEME (Encapsulation): 'static' kelimesi ile bu fonksiyonu dış dünyadan gizliyoruz.
- * Box-Muller dönüşümü ile ortalaması 0, standart sapması 'std_dev' olan 
- * Gaussian (Normal dağılımlı) rastgele sayı üretir.
- */
+
 static float generate_gaussian_noise(float std_dev) {
     // rand() 0 ile RAND_MAX arası üretir. Bunu 0.0 ile 1.0 arasına çekiyoruz.
     // log(0) hatasından kaçınmak için çok küçük bir epsilon ekliyoruz.
-    float u1 = ((float)rand() / (float)RAND_MAX) + 1e-6f;
+    float u1 = ((float)rand() / (float)RAND_MAX) + 1e-6f; 
     float u2 = ((float)rand() / (float)RAND_MAX) + 1e-6f;
 
     // Box-Muller formülü
@@ -26,8 +23,7 @@ static float generate_gaussian_noise(float std_dev) {
     return z0 * std_dev;
 }
 
-void apply_sensor_model(const KinematicState_t *ideal_state, 
-                        const ImuConfig_t *config, 
+void apply_sensor_model(const KinematicState_t *ideal_state, const ImuConfig_t *config, 
                         ImuSensorData_t *output) 
 {
     // 1. DÜNYA (GLOBAL) EKSENİNDEN GÖVDE (BODY) EKSENİNE GEÇİŞ
@@ -35,15 +31,14 @@ void apply_sensor_model(const KinematicState_t *ideal_state,
     Matrix3x3_t dcm;
     quat_to_dcm(&ideal_state->orientation, &dcm);
 
-    // Dünyadaki yerçekimi vektörünü tanımla (Z ekseninde aşağıya doğru: NED formatı)
+    // Dünyadaki yerçekimi vektörü
     Vector3_t global_gravity = {0.0f, 0.0f, GRAVITY};
     Vector3_t body_gravity;
 
     // Yerçekimini, uydunun o anki açısına göre (DCM kullanarak) sensör eksenlerine dağıt
     mat_vec_mult(&dcm, &global_gravity, &body_gravity);
 
-    // 2. İVMEÖLÇER MODELLEMESİ (Gerçek İvme + Yerçekimi + Bias + Gürültü)
-    // Not: Sensör yerçekimine karşı bir tepki kuvveti okuduğu için yerçekimini çıkarıyoruz.
+    // İVMEÖLÇER MODELLEMESİ (Gerçek İvme + Yerçekimi + Bias + Gürültü)
     output->accel_x = ideal_state->acceleration.x - body_gravity.x 
                       + config->accel_bias.x 
                       + generate_gaussian_noise(config->accel_noise_std);
@@ -56,8 +51,7 @@ void apply_sensor_model(const KinematicState_t *ideal_state,
                       + config->accel_bias.z 
                       + generate_gaussian_noise(config->accel_noise_std);
 
-    // 3. JİROSKOP MODELLEMESİ (Açısal Hız + Bias + Gürültü)
-    // Jiroskop yerçekiminden etkilenmez, doğrudan gövde eksenindeki dönüş hızını ölçer.
+    // JİROSKOP MODELLEMESİ (Açısal Hız + Bias + Gürültü)
     output->gyro_x = ideal_state->angular_rate.x 
                      + config->gyro_bias.x 
                      + generate_gaussian_noise(config->gyro_noise_std);

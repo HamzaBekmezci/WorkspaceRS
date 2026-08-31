@@ -1,4 +1,5 @@
 #include "kinematics.h"
+#include "stddef.h"
 
 // Kuaterniyonun boyunu 1'e eşitleyen (Normalize) güvenlik fonksiyonu
 void quat_normalize(Quaternion_t *q) {
@@ -16,33 +17,33 @@ void integrate_kinematics(KinematicState_t *state, const Vector3_t *body_accel,
 {
     /* ---------------------------------------------------------
      * 1. DOĞRUSAL İNTEGRASYON (Konum ve Hız)
-     * Euler Integrasyonu: V_yeni = V_eski + (A * dt)
-     *                     X_yeni = X_eski + (V * dt)
      * ---------------------------------------------------------*/
-    
-    // Uydunun ivmesini kaydet (Sensör modelinde kullanılacak)
+
     state->acceleration = *body_accel;
-    state->angular_rate = *body_gyro;
 
-    // Hızı güncelle (V = V0 + a*t)
-    state->velocity.x += body_accel->x * dt;
-    state->velocity.y += body_accel->y * dt;
-    state->velocity.z += body_accel->z * dt;
+    // Hızı güncelle (V = V0 + a*t)[cite: 1]
+    state->velocity.x += state->acceleration.x * dt;
+    state->velocity.y += state->acceleration.y * dt;
+    state->velocity.z += state->acceleration.z * dt;
 
-    // Konumu güncelle (X = X0 + v*t)
+    // Konumu güncelle (X = X0 + v*t)[cite: 1]
     state->position.x += state->velocity.x * dt;
     state->position.y += state->velocity.y * dt;
     state->position.z += state->velocity.z * dt;
 
     /* ---------------------------------------------------------
-     * 2. AÇISAL İNTEGRASYON (Kuaterniyon Güncellemesi)
-     * Formül: q_dot = 0.5 * q * omega
-     * Burada omega, uydunun açısal hız vektörüdür (p, q, r).
+     * 2. AÇISAL HIZ (ANGULAR RATE) GÜNCELLEMESİ
      * ---------------------------------------------------------*/
     
-    float p = body_gyro->x;
-    float q_rad = body_gyro->y; // 'q' harfi kuaterniyonla karışmasın diye q_rad dedik
-    float r = body_gyro->z;
+     state->angular_rate = *body_gyro;
+
+    /* ---------------------------------------------------------
+     * 3. AÇISAL İNTEGRASYON (Kuaterniyon Güncellemesi)
+     * ---------------------------------------------------------*/
+    
+    float p = state->angular_rate.x;
+    float q_rad = state->angular_rate.y; 
+    float r = state->angular_rate.z;
 
     float q_w = state->orientation.w;
     float q_x = state->orientation.x;
@@ -63,4 +64,10 @@ void integrate_kinematics(KinematicState_t *state, const Vector3_t *body_accel,
 
     // Floating point hataları birikip sistemi bozmasın diye normalize et
     quat_normalize(&state->orientation);
+
+    /* ---------------------------------------------------------
+     * 4. EULER AÇILARININ GÜNCELLENMESİ
+     * ---------------------------------------------------------*/
+    
+    quat_to_euler(&state->orientation, &state->euler_angles);
 }

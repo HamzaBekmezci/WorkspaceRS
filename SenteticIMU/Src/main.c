@@ -1,70 +1,75 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <windows.h>
 #include "math_engine.h"
 #include "kinematics.h"
 #include "sensor_engine.h"
+#include "sim_set.h"
+#include "logger.h"
 
 int main() {
-    // 1. Rastgele sayı üretecini (AWGN için) sistem saatiyle başlat
     srand((unsigned int)time(NULL));
 
-    // 2. Sistemin Başlangıç Durumu (Kinematic State)
-    // Uydu rampada duruyor. Hız, ivme ve konum sıfır.
-    KinematicState_t rasat_payload = {0}; 
-    rasat_payload.orientation.w = 1.0f; // Kuaterniyonu identity (0 derece yatıklık) olarak başlat
+    KinematicState_t ideal_payload = {0}; 
+    ideal_payload.orientation.w = 1.0f;
 
-    // 3. Sensör Profili (MPU9250 Karakteristiği)
-    // Bu değerleri sensörün datasheet'inden veya kalibrasyon testlerinden alabilirsin
-    ImuConfig_t mpu9250 = {
-        .accel_bias = {0.15f, -0.05f, 0.08f},   // m/s^2 cinsinden sabit kayma
-        .accel_noise_std = 0.1f,                // İvmeölçer beyaz gürültüsü
-        .gyro_bias = {0.02f, -0.01f, 0.01f},    // rad/s cinsinden jiroskop ofseti
-        .gyro_noise_std = 0.005f                // Jiroskop beyaz gürültüsü
-    };
+    KinematicState_t noisy_payload = {0}; 
+    noisy_payload.orientation.w = 1.0f;
 
-    // 4. CSV Başlıklarını Konsola Yazdır
-    printf("Time_s,Accel_X,Accel_Y,Accel_Z,Gyro_X,Gyro_Y,Gyro_Z\n");
+    SimSettings_t sim_settings;
+    sim_init_default(&sim_settings); 
+    // sim_set_state(&sim_settings, 1); // Manuel olarak başlatma komutu
 
-    // 5. Simülasyon Zaman Yönetimi
+    const char *header_format = "Time_s,Roll,Pitch,Yaw,Accel_X,Accel_Y,Accel_Z,Gyro_X,Gyro_Y,Gyro_Z";
+    
+    FILE *ideal_csv = logger_init("ideal_output.csv", header_format);
+    FILE *noisy_csv = logger_init("noisy_output.csv", header_format);
+    
+    if (ideal_csv == NULL || noisy_csv == NULL) {
+        printf("Hata: CSV dosyalari acilamadi!\n");
+        return -1;
+    }
+
     float t = 0.0f;
-    float dt = 0.01f; // 100 Hz çalışma frekansı
-    float sim_duration = 5.0f; // Toplam 5 saniyelik test
 
-    // 6. ANA SİMÜLASYON DÖNGÜSÜ
-    while (t <= sim_duration) {
-        
-        // Bu zaman adımındaki hedef fiziksel kuvvetler
-        Vector3_t target_accel = {0.0f, 0.0f, 0.0f};
-        Vector3_t target_gyro = {0.0f, 0.0f, 0.0f};
-
-        // --- UÇUŞ PROFİLİ (Durum Makinesi) ---
-        if (t > 1.0f && t <= 3.0f) {
-            // Fırlatma Fazı: Z ekseninde +25 m/s^2 ivme ve Z ekseninde hafif spin
-            target_accel.z = 25.0f; 
-            target_gyro.z = 0.5f; // rad/s
-        } else if (t > 3.0f) {
-           // Serbest Düşüş / İtki Sonu: Motorlar kapandı, sadece yerçekimi ivmesi var (-Z yönünde)
-            target_accel.z = -9.80665f;
-            target_gyro.z = 0.0f;
+    while (1) {
+        if (sim_settings.is_running == 0) {
+            Sleep(1);
+            continue; 
         }
 
-        // 1. ADIM: Kinematik Motoru Çalıştır (Fiziği İlerlet)
-        integrate_kinematics(&rasat_payload, &target_accel, &target_gyro, dt);
+        float dt = 1.0f / sim_settings.update_rate_hz;
 
-        // 2. ADIM: Sensör Motorunu Çalıştır (Fiziksel veriyi gürültülü IMU verisine çevir)
+        // sim_settings üzerinden güncel veriyi alıyoruz
+        Vector3_t target_accel = sim_settings.target_accel;
+        Vector3_t target_gyro = sim_settings.target_gyro;
+
+        integrate_kinematics(&ideal_payload, &target_accel, &target_gyro, dt);
+
         ImuSensorData_t sensor_output;
-        apply_sensor_model(&rasat_payload, &mpu9250, &sensor_output);
+        apply_sensor_model(&ideal_payload, &sim_settings.imu_settings, &sensor_output);
 
-        // 3. ADIM: Çıktıyı CSV formatında bas
-        printf("%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
-               t,
-               sensor_output.accel_x, sensor_output.accel_y, sensor_output.accel_z,
-               sensor_output.gyro_x, sensor_output.gyro_y, sensor_output.gyro_z);
+        Vector3_t noisy_accel = {sensor_output.accel_x, sensor_output.accel_y, sensor_output.accel_z};
+        Vector3_t noisy_gyro = {sensor_output.gyro_x, sensor_output.gyro_y, sensor_output.gyro_z};
+        
+        integrate_kinematics(&noisy_payload, &noisy_accel, &noisy_gyro, dt);
 
-        // Zamanı bir adım ileri al
+        logger_write_row(ideal_csv, t, 
+                         ideal_payload.euler_angles.roll, ideal_payload.euler_angles.pitch, ideal_payload.euler_angles.yaw,
+                         target_accel.x, target_accel.y, target_accel.z,
+                         target_gyro.x, target_gyro.y, target_gyro.z);
+                
+        logger_write_row(noisy_csv, t, 
+                         noisy_payload.euler_angles.roll, noisy_payload.euler_angles.pitch, noisy_payload.euler_angles.yaw,
+                         sensor_output.accel_x, sensor_output.accel_y, sensor_output.accel_z,
+                         sensor_output.gyro_x, sensor_output.gyro_y, sensor_output.gyro_z);
+
         t += dt;
     }
 
+    logger_close(ideal_csv);
+    logger_close(noisy_csv);
+    
     return 0;
 }

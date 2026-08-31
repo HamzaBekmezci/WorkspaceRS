@@ -4,7 +4,6 @@
 #include "math_engine.h"
 
 // Kuaterniyonun zamanla bozulmasını engellemek için normalizasyon (1'e tamamlama) 
-// işlemi gereklidir. Bu yardımcı fonksiyonu da buraya ekliyoruz.
 void quat_normalize(Quaternion_t *q);
 
 /*
