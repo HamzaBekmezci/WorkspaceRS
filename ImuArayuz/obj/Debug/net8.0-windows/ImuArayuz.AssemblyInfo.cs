@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ImuArayuz")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4f36ba4fcb9e7087453808e2c55aa618c910935b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1663270442f80cc2d3ac63954cdb70745c83ff29")]
 [assembly: System.Reflection.AssemblyProductAttribute("ImuArayuz")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ImuArayuz")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

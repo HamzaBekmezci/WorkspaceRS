@@ -36,6 +36,9 @@ namespace ImuArayuz
         public static extern void sim_api_update_target_forces(float accel_x, float accel_y, float accel_z, 
                                                                 float gyro_x, float gyro_y, float gyro_z);
 
+        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void sim_api_set_initial_orientation(float roll, float pitch, float yaw);
+
         private System.Windows.Threading.DispatcherTimer uiTimer = new System.Windows.Threading.DispatcherTimer();
         private Stopwatch stopwatch = new Stopwatch();
         private int isSimRunning = 0;
@@ -208,7 +211,7 @@ namespace ImuArayuz
         }
 
         // Başlangıç Açıları Değiştiğinde Anlık Uygulayan Metot
-        private void InitOrientation_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+       private void InitOrientation_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             if (!isInitialized) return;
             if (TxtInitRoll == null || TxtInitPitch == null || TxtInitYaw == null) return;
@@ -220,10 +223,20 @@ namespace ImuArayuz
             float.TryParse(TxtInitPitch.Text, numStyle, inv, out float pitch);
             float.TryParse(TxtInitYaw.Text, numStyle, inv, out float yaw);
 
-            // PRY küpünün başlangıç / mutlak açılarını doğrudan güncelliyoruz
+            // 1. C# tarafında 1. küpün (PRY) görsel açısını güncelle
             ((AxisAngleRotation3D)rotateX1.Rotation).Angle = roll;
             ((AxisAngleRotation3D)rotateY1.Rotation).Angle = pitch;
             ((AxisAngleRotation3D)rotateZ1.Rotation).Angle = yaw;
+
+            // 2. C motoruna başlangıç açılarını gönder (Böylece 2. küp yerçekimi dağılımını hesaplayabilsin)
+            try
+            {
+                sim_api_set_initial_orientation(roll, pitch, yaw);
+            }
+            catch 
+            {
+                // DLL bağlantı hatası durumunda yoksay
+            }
         }
 
         private void Noise_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
