@@ -9,7 +9,7 @@ void sim_init_default(SimSettings_t *settings) {
     settings->target_gyro = (Vector3_t){0.0f, 0.0f, 0.0f};
 
     // Varsayılan temiz sensör ayarları
-    settings->imu_settings.accel_noise_std = 0.0f;
+    settings->imu_settings.accel_noise_std = 0.0f; 
     settings->imu_settings.gyro_noise_std = 0.0f;
     
     settings->imu_settings.accel_bias = (Vector3_t){0.0f, 0.0f, 0.0f};
