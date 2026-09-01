@@ -11,6 +11,7 @@ typedef struct {
     int is_running;               // Simülasyon durumu (1: Çalışıyor, 0: Duraklatıldı)
     Vector3_t target_accel;     // Arayüzden gelen hedef ivme değerleri
     Vector3_t target_gyro;      // Arayüzden gelen hedef jiroskop değerleri
+    Vector3_t initial_orientation;// Başlangıç Açıları (Roll, Pitch, Yaw)
 } SimSettings_t;
 
 // Arayüzün çağıracağı kontrol fonksiyonları
@@ -20,5 +21,6 @@ void sim_set_state(SimSettings_t *settings, int state);
 void sim_update_bias(SimSettings_t *settings, Vector3_t a_bias, Vector3_t g_bias);
 void sim_update_hz(SimSettings_t *settings, float new_hz);
 void sim_update_target_forces(SimSettings_t *settings, Vector3_t accel, Vector3_t gyro);
+void sim_update_initial_orientation(SimSettings_t *settings, float roll, float pitch, float yaw);
 
 #endif // SIM_SET_H

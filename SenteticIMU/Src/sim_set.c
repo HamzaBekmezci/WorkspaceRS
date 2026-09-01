@@ -5,11 +5,11 @@ void sim_init_default(SimSettings_t *settings) {
     settings->is_running = 0;             // Başlangıçta duruyor
     settings->update_rate_hz = 100.0f;    // 100 Hz veri üretimi
 
-    // Varsayılan hedef kuvvetleri sıfırla
     settings->target_accel = (Vector3_t){0.0f, 0.0f, 0.0f};
     settings->target_gyro = (Vector3_t){0.0f, 0.0f, 0.0f};
 
-    // Varsayılan temiz sensör ayarları
+    settings->initial_orientation = (Vector3_t){0.0f, 0.0f, 0.0f};
+
     settings->imu_settings.accel_noise_std = 0.0f;
     settings->imu_settings.gyro_noise_std = 0.0f;
 
@@ -45,3 +45,8 @@ void sim_update_target_forces(SimSettings_t *settings, Vector3_t accel, Vector3_
     settings->target_accel = accel;
     settings->target_gyro = gyro;
 } 
+
+// Başlangıç açılarını (Roll, Pitch, Yaw) yapıya kaydeden fonksiyon
+void sim_update_initial_orientation(SimSettings_t *settings, float roll, float pitch, float yaw) {
+    settings->initial_orientation = (Vector3_t){roll, pitch, yaw};
+}
