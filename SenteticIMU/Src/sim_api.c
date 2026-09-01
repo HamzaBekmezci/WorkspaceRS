@@ -15,7 +15,6 @@ static float t;
 static float time_accumulator = 0.0f;
 SimSettings_t sim_settings;
 
-
 // İki ayrı dosya işaretçisi
 static FILE *ideal_csv;
 static FILE *noisy_csv;
@@ -23,15 +22,33 @@ static FILE *noisy_csv;
 SIM_API void sim_init(void) {
     srand((unsigned int)time(NULL));
     
-    ideal_payload = (KinematicState_t){0};
-    ideal_payload.orientation.w = 1.0f;
-    
-    noisy_payload = (KinematicState_t){0};
-    noisy_payload.orientation.w = 1.0f;
-    
+    // C# arayüzünden sim_init öncesi gelen başlangıç açılarını kaybetmemek için sakla
+    Vector3_t saved_init_orient = sim_settings.initial_orientation;
+
     sim_init_default(&sim_settings); 
+    
+    // Saklanan açıları geri yükle
+    sim_settings.initial_orientation = saved_init_orient;
+    
     sim_set_state(&sim_settings, 0); 
     t = 0.0f;
+
+    ideal_payload = (KinematicState_t){0};
+    noisy_payload = (KinematicState_t){0};
+
+    // Başlangıç açılarını (derece) radyana çevir ve kuaterniyona dönüştür
+    EulerAngles_t init_euler_rad = {
+        .roll  = sim_settings.initial_orientation.x * (3.14159265f / 180.0f),
+        .pitch = sim_settings.initial_orientation.y * (3.14159265f / 180.0f),
+        .yaw   = sim_settings.initial_orientation.z * (3.14159265f / 180.0f)
+    };
+    
+    euler_to_quat(&init_euler_rad, &ideal_payload.orientation);
+    quat_normalize(&ideal_payload.orientation);
+    quat_to_euler(&ideal_payload.orientation, &ideal_payload.euler_angles);
+
+    noisy_payload.orientation = ideal_payload.orientation;
+    noisy_payload.euler_angles = ideal_payload.euler_angles;
 
     // Log dosyalarını başlat
     const char *header = "Time_s,Roll,Pitch,Yaw,Accel_X,Accel_Y,Accel_Z,Gyro_X,Gyro_Y,Gyro_Z";
@@ -39,36 +56,45 @@ SIM_API void sim_init(void) {
     noisy_csv = logger_init("noisy_output.csv", header);
 }
 
+// Arayüzden anlık açı değiştiğinde doğrudan payload yönelimini güncelleyen köprü
+SIM_API void sim_api_set_initial_orientation(float roll, float pitch, float yaw) {
+    sim_update_initial_orientation(&sim_settings, roll, pitch, yaw);
+
+    EulerAngles_t init_euler_rad = {
+        .roll  = roll * (3.14159265f / 180.0f),
+        .pitch = pitch * (3.14159265f / 180.0f),
+        .yaw   = yaw * (3.14159265f / 180.0f)
+    };
+
+    euler_to_quat(&init_euler_rad, &ideal_payload.orientation);
+    quat_normalize(&ideal_payload.orientation);
+    quat_to_euler(&ideal_payload.orientation, &ideal_payload.euler_angles);
+
+    noisy_payload.orientation = ideal_payload.orientation;
+    noisy_payload.euler_angles = ideal_payload.euler_angles;
+}
+
 SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, float* acc_z, 
                            float* gyro_x, float* gyro_y, float* gyro_z) {
     
     if (sim_settings.is_running == 0) return;
 
-    // Arayüzden belirlenen güncel Hz'ye göre 1 adımın süresi
     float dt = 1.0f / sim_settings.update_rate_hz; 
-    ImuSensorData_t sensor_output = {0}; // Başlangıç değeri
+    ImuSensorData_t sensor_output = {0};
 
-    // C#'tan gelen süreyi (örneğin 0.016 sn) havuza ekle
     time_accumulator += elapsed_time_s;
 
-    // Havuzda en az 1 simülasyon adımı atacak kadar zaman (dt) biriktiği sürece dön
     while (time_accumulator >= dt) {
-        
         Vector3_t target_accel = sim_settings.target_accel;
         Vector3_t target_gyro = sim_settings.target_gyro;
 
-        // 1. İdeal model entegrasyonu
         integrate_kinematics(&ideal_payload, &target_accel, &target_gyro, dt);
-
-        // 2. Sensör modeli 
         apply_sensor_model(&ideal_payload, &sim_settings.imu_settings, &sensor_output);
 
-        // 3. Gürültülü model entegrasyonu
         Vector3_t noisy_accel = {sensor_output.accel_x, sensor_output.accel_y, sensor_output.accel_z};
         Vector3_t noisy_gyro = {sensor_output.gyro_x, sensor_output.gyro_y, sensor_output.gyro_z};
         integrate_kinematics(&noisy_payload, &noisy_accel, &noisy_gyro, dt);
 
-        // 4. İdeal veriyi CSV'ye yaz
         if (ideal_csv != NULL) {
             logger_write_row(ideal_csv, t, 
                              ideal_payload.euler_angles.roll, ideal_payload.euler_angles.pitch, ideal_payload.euler_angles.yaw,
@@ -76,7 +102,6 @@ SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, flo
                              target_gyro.x, target_gyro.y, target_gyro.z);
         }
         
-        // 5. Gürültülü veriyi CSV'ye yaz
         if (noisy_csv != NULL) {
             logger_write_row(noisy_csv, t, 
                              noisy_payload.euler_angles.roll, noisy_payload.euler_angles.pitch, noisy_payload.euler_angles.yaw,
@@ -84,11 +109,10 @@ SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, flo
                              noisy_gyro.x, noisy_gyro.y, noisy_gyro.z);
         }
         
-        t += dt;                 // Toplam simülasyon süresini ilerlet
-        time_accumulator -= dt;  // Havuzdan işlenen 1 adımlık zamanı düş
+        t += dt;                 
+        time_accumulator -= dt;  
     }
 
-    // Arayüze güncel sensör verilerini aktar
     if(acc_x) *acc_x = sensor_output.accel_x;
     if(acc_y) *acc_y = sensor_output.accel_y;
     if(acc_z) *acc_z = sensor_output.accel_z;

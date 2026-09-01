@@ -68,7 +68,7 @@
                 <!-- Hedef Kuvvetler / Hareket Girdileri -->
                 <GroupBox Header="Hedef Kuvvetler (Target Forces)" Margin="0,0,0,15" Padding="10">
                     <StackPanel>
-                        <TextBlock Text="Hedef İvme (X, Y, Z):" Margin="0,0,0,5"/>
+                        <TextBlock Text="Hedef İvme (X, Y, Z) [m/s²]:" Margin="0,0,0,5"/>
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                             <TextBox x:Name="TxtTargetAccelX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
@@ -76,7 +76,7 @@
                             <TextBox x:Name="TxtTargetAccelZ" Grid.Column="2" Text="0" TextChanged="Target_TextChanged"/>
                         </Grid>
 
-                        <TextBlock Text="Hedef Gyro / Açısal Hız (X, Y, Z):" Margin="0,0,0,5"/>
+                        <TextBlock Text="Hedef Gyro / Açısal Hız (X, Y, Z) [rad/s]:" Margin="0,0,0,5"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                             <TextBox x:Name="TxtTargetGyroX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
@@ -89,12 +89,23 @@
         </ScrollViewer>
 
         <!-- Sağ Taraf: 3D Küp Modelleri ve Lejand -->
-        <StackPanel Grid.Column="1" Margin="10,0,0,0">
-            <TextBlock Text="3D Yönelim ve Kuvvet Görselleştirme" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+        <Grid Grid.Column="1" Margin="10,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="3D Yönelim ve Kuvvet Görselleştirme" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
             <!-- 1. Küp: Sensör Yönelimi (PRY) -->
-            <TextBlock Text="Sensör Yönelimi (PRY Model)" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,3"/>
-            <Border BorderBrush="Gray" BorderThickness="1" Height="170" Margin="0,0,0,10" Background="#1E1E1E">
+            <TextBlock Grid.Row="1" Text="Sensör Yönelimi (PRY Model)" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,3"/>
+            <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,10" Background="#1E1E1E">
                 <Viewport3D x:Name="ViewportPRY">
                     <Viewport3D.Camera>
                         <PerspectiveCamera Position="3, 3, 4" LookDirection="-3, -3, -4" UpDirection="0, 1, 0" FieldOfView="45"/>
@@ -111,8 +122,8 @@
             </Border>
 
             <!-- 2. Küp: Etki Kuvvetleri Modeli -->
-            <TextBlock Text="Etki Kuvvetleri Modeli" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,3"/>
-            <Border BorderBrush="Gray" BorderThickness="1" Height="170" Margin="0,0,0,10" Background="#1E1E1E">
+            <TextBlock Grid.Row="3" Text="Etki Kuvvetleri Modeli" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,3"/>
+            <Border Grid.Row="4" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,10" Background="#1E1E1E">
                 <Viewport3D x:Name="ViewportForces">
                     <Viewport3D.Camera>
                         <PerspectiveCamera Position="3, 3, 4" LookDirection="-3, -3, -4" UpDirection="0, 1, 0" FieldOfView="45"/>
@@ -129,15 +140,15 @@
             </Border>
 
             <!-- Eksen Renk Lejandı -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
                 <TextBlock Text="Eksenler: " FontWeight="Bold" FontSize="12"/>
                 <TextBlock Text="X (Kırmızı)" Foreground="Red" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
                 <TextBlock Text="Y (Yeşil)" Foreground="Green" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
                 <TextBlock Text="Z (Mavi)" Foreground="Blue" FontWeight="Bold" FontSize="12" Margin="8,0,0,0"/>
             </StackPanel>
 
-            <TextBlock x:Name="TxtAccel" Text="İvme: ..." FontSize="12"/>
-            <TextBlock x:Name="TxtGyro" Text="Gyro: ..." FontSize="12"/>
-        </StackPanel>
+            <TextBlock Grid.Row="6" x:Name="TxtAccel" Text="İvme: ..." FontSize="12" Margin="0,0,0,3"/>
+            <TextBlock Grid.Row="7" x:Name="TxtGyro" Text="Gyro: ..." FontSize="12"/>
+        </Grid>
     </Grid>
 </Window>

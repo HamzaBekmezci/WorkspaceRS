@@ -1,4 +1,3 @@
-#include "sim_api.h"
 #include "sim_set.h"
 
 #ifdef _WIN32
@@ -38,11 +37,6 @@ SIM_API void sim_api_update_target_forces(float accel_x, float accel_y, float ac
     Vector3_t target_a = {accel_x, accel_y, accel_z};
     Vector3_t target_g = {gyro_x, gyro_y, gyro_z};
     sim_update_target_forces(&sim_settings, target_a, target_g);
-}
-
-// Yeni Eklenen Başlangıç Açısı Köprü Fonksiyonu
-SIM_API void sim_api_set_initial_orientation(float roll, float pitch, float yaw) {
-    sim_update_initial_orientation(&sim_settings, roll, pitch, yaw);
 }
 
 #ifdef __cplusplus

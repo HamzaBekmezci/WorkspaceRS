@@ -109,7 +109,7 @@ namespace ImuArayuz
 
             var faces = new[]
             {
-                new { Indices = new int[] { 4, 5, 6,  4, 6, 7 }, Brush = Brushes.IndianRed },
+                new { Indices = new int[] { 4, 5, 6,  4, 6, 7 }, Brush = Brushes.Red },
                 new { Indices = new int[] { 1, 0, 3,  1, 3, 2 }, Brush = Brushes.DarkGray },
                 new { Indices = new int[] { 0, 4, 7,  0, 7, 3 }, Brush = Brushes.MidnightBlue },
                 new { Indices = new int[] { 5, 1, 2,  5, 2, 6 }, Brush = Brushes.Navy },
@@ -129,8 +129,8 @@ namespace ImuArayuz
 
             // Eksen Çubukları (X: Kırmızı, Y: Yeşil, Z: Mavi)
             cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(1.0, 0, 0), Brushes.Red));
-            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 1.0, 0), Brushes.Green));
-            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 0, 1.0), Brushes.Blue));
+            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 1.0, 0), Brushes.Blue));
+            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 0, 1.0), Brushes.Green));
 
             Transform3DGroup tGroup = new Transform3DGroup();
             tGroup.Children.Add(customTransform);

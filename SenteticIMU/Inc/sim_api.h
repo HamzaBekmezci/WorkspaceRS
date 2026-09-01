@@ -26,9 +26,7 @@ SIM_API void sim_api_update_bias(float a_bias_x, float a_bias_y, float a_bias_z,
                                  float g_bias_x, float g_bias_y, float g_bias_z);
 SIM_API void sim_api_update_target_forces(float accel_x, float accel_y, float accel_z, 
                                           float gyro_x, float gyro_y, float gyro_z);
-                                          
-// Yeni Eklenen Başlangıç Açısı Fonksiyonu
-SIM_API void sim_api_set_initial_orientation(float roll, float pitch, float yaw);
+                                        
 
 #ifdef __cplusplus
 }
