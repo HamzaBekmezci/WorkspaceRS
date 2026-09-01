@@ -1,5 +1,6 @@
 #include "sim_set.h"
 
+
 void sim_init_default(SimSettings_t *settings) {
     settings->is_running = 0;             // Başlangıçta duruyor
     settings->update_rate_hz = 100.0f;    // 100 Hz veri üretimi
@@ -9,11 +10,12 @@ void sim_init_default(SimSettings_t *settings) {
     settings->target_gyro = (Vector3_t){0.0f, 0.0f, 0.0f};
 
     // Varsayılan temiz sensör ayarları
-    settings->imu_settings.accel_noise_std = 0.0f; 
+    settings->imu_settings.accel_noise_std = 0.0f;
     settings->imu_settings.gyro_noise_std = 0.0f;
-    
+
     settings->imu_settings.accel_bias = (Vector3_t){0.0f, 0.0f, 0.0f};
     settings->imu_settings.gyro_bias = (Vector3_t){0.0f, 0.0f, 0.0f};
+
 }
 
 void sim_set_state(SimSettings_t *settings, int state) {
@@ -42,4 +44,4 @@ void sim_update_hz(SimSettings_t *settings, float new_hz) {
 void sim_update_target_forces(SimSettings_t *settings, Vector3_t accel, Vector3_t gyro) {
     settings->target_accel = accel;
     settings->target_gyro = gyro;
-}
+} 

@@ -10,12 +10,13 @@ add_compile_options(-Wall -Wextra -O2)
 
 # 1. Ortak Kaynak Dosyaları
 set(MOTOR_KAYNAKLAR 
-    Src/main.c 
+    Src/sim_api.c 
     Src/math_engine.c 
     Src/kinematics.c
     Src/sensor_engine.c
     Src/logger.c
     Src/sim_set.c
+    Src/sim_set_api.c
 )
 
 message(STATUS ">>> SentetikIMU: DLL Modu Aktif <<<")
@@ -23,12 +24,6 @@ message(STATUS ">>> SentetikIMU: DLL Modu Aktif <<<")
 # 2. Dinamik Kütüphaneyi (DLL) Oluştur
 # Burada manuel dosya isimleri yerine yukarıda tanımladığın listeyi kullanıyoruz.
 add_library(ImuSimulator SHARED ${MOTOR_KAYNAKLAR})
-
-# 3. DLL Çıktı Klasörünü Sabitleme
-set_target_properties(ImuSimulator PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output"
-)
 
 # 4. Arayüz (Header) Klasörünü Tanıtmak
 target_include_directories(ImuSimulator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Inc)

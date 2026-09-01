@@ -1,12 +1,143 @@
 ﻿<Window x:Class="ImuArayuz.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ImuArayuz"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="IMU Simülasyon Kontrol Paneli" Height="820" Width="950">
+    <Grid Margin="15">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.2*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
+        <!-- Sol Taraf: Gelişmiş Kontrol Paneli -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0">
+            <StackPanel>
+                <TextBlock Text="Simülasyon Kontrolleri" FontWeight="Bold" FontSize="16" Margin="0,0,0,15"/>
+                <Button x:Name="BtnToggleSim" Content="Simülasyonu Başlat" Height="35" Background="#4CAF50" Foreground="White" FontWeight="Bold" Margin="0,0,0,15" Click="ToggleSim_Click"/>
+
+                <TextBlock Text="Güncelleme Frekansı (Hz):" Margin="0,0,0,5"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                    <TextBox x:Name="HzTextBox" Text="1000" Width="100" Height="25" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                    <Button Content="Uygula" Width="80" Height="25" Click="ApplyHz_Click"/>
+                </StackPanel>
+
+                <!-- Başlangıç / Manuel Yönelim (PRY) -->
+                <GroupBox Header="Başlangıç Açıları (Roll, Pitch, Yaw)" Margin="0,0,0,15" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="Roll, Pitch, Yaw (Derece):" Margin="0,0,0,5"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtInitRoll" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="InitOrientation_TextChanged"/>
+                            <TextBox x:Name="TxtInitPitch" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="InitOrientation_TextChanged"/>
+                            <TextBox x:Name="TxtInitYaw" Grid.Column="2" Text="0" TextChanged="InitOrientation_TextChanged"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- İvmeölçer Gürültü ve Bias -->
+                <GroupBox Header="İvmeölçer (Accel) Ayarları" Margin="0,0,0,15" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="Gürültü Seviyesi (Std - örn: 0.01):" Margin="0,0,0,5"/>
+                        <TextBox x:Name="TxtAccelNoise" Text="0.0" Height="25" Margin="0,0,0,10" TextChanged="Noise_TextChanged" VerticalContentAlignment="Center"/>
+                        
+                        <TextBlock Text="Bias (X, Y, Z):" Margin="0,0,0,5"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtAccelBiasX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Bias_TextChanged"/>
+                            <TextBox x:Name="TxtAccelBiasY" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="Bias_TextChanged"/>
+                            <TextBox x:Name="TxtAccelBiasZ" Grid.Column="2" Text="0" TextChanged="Bias_TextChanged"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Jiroskop Gürültü ve Bias -->
+                <GroupBox Header="Jiroskop (Gyro) Ayarları" Margin="0,0,0,15" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="Gürültü Seviyesi (Std - örn: 0.01):" Margin="0,0,0,5"/>
+                        <TextBox x:Name="TxtGyroNoise" Text="0.0" Height="25" Margin="0,0,0,10" TextChanged="Noise_TextChanged" VerticalContentAlignment="Center"/>
+                        
+                        <TextBlock Text="Bias (X, Y, Z):" Margin="0,0,0,5"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtGyroBiasX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Bias_TextChanged"/>
+                            <TextBox x:Name="TxtGyroBiasY" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="Bias_TextChanged"/>
+                            <TextBox x:Name="TxtGyroBiasZ" Grid.Column="2" Text="0" TextChanged="Bias_TextChanged"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Hedef Kuvvetler / Hareket Girdileri -->
+                <GroupBox Header="Hedef Kuvvetler (Target Forces)" Margin="0,0,0,15" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="Hedef İvme (X, Y, Z):" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtTargetAccelX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
+                            <TextBox x:Name="TxtTargetAccelY" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
+                            <TextBox x:Name="TxtTargetAccelZ" Grid.Column="2" Text="0" TextChanged="Target_TextChanged"/>
+                        </Grid>
+
+                        <TextBlock Text="Hedef Gyro / Açısal Hız (X, Y, Z):" Margin="0,0,0,5"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtTargetGyroX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
+                            <TextBox x:Name="TxtTargetGyroY" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
+                            <TextBox x:Name="TxtTargetGyroZ" Grid.Column="2" Text="0" TextChanged="Target_TextChanged"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Sağ Taraf: 3D Küp Modelleri ve Lejand -->
+        <StackPanel Grid.Column="1" Margin="10,0,0,0">
+            <TextBlock Text="3D Yönelim ve Kuvvet Görselleştirme" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+
+            <!-- 1. Küp: Sensör Yönelimi (PRY) -->
+            <TextBlock Text="Sensör Yönelimi (PRY Model)" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,3"/>
+            <Border BorderBrush="Gray" BorderThickness="1" Height="170" Margin="0,0,0,10" Background="#1E1E1E">
+                <Viewport3D x:Name="ViewportPRY">
+                    <Viewport3D.Camera>
+                        <PerspectiveCamera Position="3, 3, 4" LookDirection="-3, -3, -4" UpDirection="0, 1, 0" FieldOfView="45"/>
+                    </Viewport3D.Camera>
+                    <ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <Model3DGroup>
+                                <AmbientLight Color="#808080"/>
+                                <DirectionalLight Color="#FFFFFF" Direction="-1,-2,-3"/>
+                            </Model3DGroup>
+                        </ModelVisual3D.Content>
+                    </ModelVisual3D>
+                </Viewport3D>
+            </Border>
+
+            <!-- 2. Küp: Etki Kuvvetleri Modeli -->
+            <TextBlock Text="Etki Kuvvetleri Modeli" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,3"/>
+            <Border BorderBrush="Gray" BorderThickness="1" Height="170" Margin="0,0,0,10" Background="#1E1E1E">
+                <Viewport3D x:Name="ViewportForces">
+                    <Viewport3D.Camera>
+                        <PerspectiveCamera Position="3, 3, 4" LookDirection="-3, -3, -4" UpDirection="0, 1, 0" FieldOfView="45"/>
+                    </Viewport3D.Camera>
+                    <ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <Model3DGroup>
+                                <AmbientLight Color="#808080"/>
+                                <DirectionalLight Color="#FFFFFF" Direction="-1,-2,-3"/>
+                            </Model3DGroup>
+                        </ModelVisual3D.Content>
+                    </ModelVisual3D>
+                </Viewport3D>
+            </Border>
+
+            <!-- Eksen Renk Lejandı -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                <TextBlock Text="Eksenler: " FontWeight="Bold" FontSize="12"/>
+                <TextBlock Text="X (Kırmızı)" Foreground="Red" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
+                <TextBlock Text="Y (Yeşil)" Foreground="Green" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
+                <TextBlock Text="Z (Mavi)" Foreground="Blue" FontWeight="Bold" FontSize="12" Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <TextBlock x:Name="TxtAccel" Text="İvme: ..." FontSize="12"/>
+            <TextBlock x:Name="TxtGyro" Text="Gyro: ..." FontSize="12"/>
+        </StackPanel>
     </Grid>
 </Window>
