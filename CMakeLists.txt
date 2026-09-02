@@ -3,5 +3,4 @@ project(AnaSistem C)
 
 # Alt projeleri (klasörleri) sisteme dahil et
 add_subdirectory(Deneme)
-add_subdirectory(MiniAvionik)
 add_subdirectory(SenteticIMU)

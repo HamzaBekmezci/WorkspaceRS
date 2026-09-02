@@ -10,7 +10,6 @@
 extern "C" {
 #endif
 
-// Motorun ana ayar nesnesinin dışarıdan geldiğini belirtiyoruz
 extern SimSettings_t sim_settings; 
 
 SIM_API void sim_api_set_state(int state) {

@@ -12,7 +12,6 @@
 
 
 static float generate_gaussian_noise(float std_dev) {
-    // rand() 0 ile RAND_MAX arası üretir. Bunu 0.0 ile 1.0 arasına çekiyoruz.
     // log(0) hatasından kaçınmak için çok küçük bir epsilon ekliyoruz.
     float u1 = ((float)rand() / (float)RAND_MAX) + 1e-6f; 
     float u2 = ((float)rand() / (float)RAND_MAX) + 1e-6f;
@@ -38,7 +37,7 @@ void apply_sensor_model(const KinematicState_t *ideal_state, const ImuConfig_t *
     // Yerçekimini, uydunun o anki açısına göre (DCM kullanarak) sensör eksenlerine dağıt
     mat_vec_mult(&dcm, &global_gravity, &body_gravity);
 
-    // İVMEÖLÇER MODELLEMESİ (Gerçek İvme + Yerçekimi + Bias + Gürültü)
+    // İVMEÖLÇER MODELLEMESİ
     output->accel_x = ideal_state->acceleration.x - body_gravity.x 
                       + config->accel_bias.x 
                       + generate_gaussian_noise(config->accel_noise_std);
@@ -51,7 +50,7 @@ void apply_sensor_model(const KinematicState_t *ideal_state, const ImuConfig_t *
                       + config->accel_bias.z 
                       + generate_gaussian_noise(config->accel_noise_std);
 
-    // JİROSKOP MODELLEMESİ (Açısal Hız + Bias + Gürültü)
+    // JİROSKOP MODELLEMESİ 
     output->gyro_x = ideal_state->angular_rate.x 
                      + config->gyro_bias.x 
                      + generate_gaussian_noise(config->gyro_noise_std);

@@ -33,10 +33,10 @@
                     </StackPanel>
                 </GroupBox>
 
-                <!-- İvmeölçer Gürültü ve Bias -->
-                <GroupBox Header="İvmeölçer (Accel) Ayarları" Margin="0,0,0,15" Padding="10">
+               <!-- İvmeölçer Standart Sapma ve Bias -->
+                <GroupBox Header="İvmeölçer (Accel) Hata Modeli" Margin="0,0,0,15" Padding="10">
                     <StackPanel>
-                        <TextBlock Text="Gürültü Seviyesi (Std - örn: 0.01):" Margin="0,0,0,5"/>
+                        <TextBlock Text="Standart Sapma (σ) [Aralık: 0.0 - 5.0]:" Margin="0,0,0,5" FontWeight="SemiBold"/>
                         <TextBox x:Name="TxtAccelNoise" Text="0.0" Height="25" Margin="0,0,0,10" TextChanged="Noise_TextChanged" VerticalContentAlignment="Center"/>
                         
                         <TextBlock Text="Bias (X, Y, Z):" Margin="0,0,0,5"/>
@@ -49,10 +49,10 @@
                     </StackPanel>
                 </GroupBox>
 
-                <!-- Jiroskop Gürültü ve Bias -->
-                <GroupBox Header="Jiroskop (Gyro) Ayarları" Margin="0,0,0,15" Padding="10">
+                <!-- Jiroskop Standart Sapma ve Bias -->
+                <GroupBox Header="Jiroskop (Gyro) Hata Modeli" Margin="0,0,0,15" Padding="10">
                     <StackPanel>
-                        <TextBlock Text="Gürültü Seviyesi (Std - örn: 0.01):" Margin="0,0,0,5"/>
+                        <TextBlock Text="Standart Sapma (σ) [Aralık: 0.0 - 5.0]:" Margin="0,0,0,5" FontWeight="SemiBold"/>
                         <TextBox x:Name="TxtGyroNoise" Text="0.0" Height="25" Margin="0,0,0,10" TextChanged="Noise_TextChanged" VerticalContentAlignment="Center"/>
                         
                         <TextBlock Text="Bias (X, Y, Z):" Margin="0,0,0,5"/>
@@ -108,13 +108,13 @@
             <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,10" Background="#1E1E1E">
                 <Viewport3D x:Name="ViewportPRY">
                     <Viewport3D.Camera>
-                        <PerspectiveCamera Position="3, 3, 4" LookDirection="-3, -3, -4" UpDirection="0, 1, 0" FieldOfView="45"/>
+                        <PerspectiveCamera Position="3, 3, -4" LookDirection="-3, -3, 4" UpDirection="0, 1, 0" FieldOfView="45"/>
                     </Viewport3D.Camera>
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
                             <Model3DGroup>
                                 <AmbientLight Color="#808080"/>
-                                <DirectionalLight Color="#FFFFFF" Direction="-1,-2,-3"/>
+                                <DirectionalLight Color="#FFFFFF" Direction="-1,-2, 3"/>
                             </Model3DGroup>
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
@@ -126,13 +126,13 @@
             <Border Grid.Row="4" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,10" Background="#1E1E1E">
                 <Viewport3D x:Name="ViewportForces">
                     <Viewport3D.Camera>
-                        <PerspectiveCamera Position="3, 3, 4" LookDirection="-3, -3, -4" UpDirection="0, 1, 0" FieldOfView="45"/>
+                        <PerspectiveCamera Position="3, 3, -4" LookDirection="-3, -3, 4" UpDirection="0, 1, 0" FieldOfView="45"/>
                     </Viewport3D.Camera>
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
                             <Model3DGroup>
                                 <AmbientLight Color="#808080"/>
-                                <DirectionalLight Color="#FFFFFF" Direction="-1,-2,-3"/>
+                                <DirectionalLight Color="#FFFFFF" Direction="-1,-2, 3"/>
                             </Model3DGroup>
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
@@ -142,8 +142,8 @@
             <!-- Eksen Renk Lejandı -->
             <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
                 <TextBlock Text="Eksenler: " FontWeight="Bold" FontSize="12"/>
-                <TextBlock Text="X (Kırmızı)" Foreground="Red" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
-                <TextBlock Text="Y (Yeşil)" Foreground="Green" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
+                <TextBlock Text="X (Yeşil)" Foreground="Green" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
+                <TextBlock Text="Y (Kırmızı)" Foreground="Red" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
                 <TextBlock Text="Z (Mavi)" Foreground="Blue" FontWeight="Bold" FontSize="12" Margin="8,0,0,0"/>
             </StackPanel>
 

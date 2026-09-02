@@ -7,9 +7,9 @@
 typedef struct {
     ImuConfig_t imu_settings;     // Bias ve gürültü ayarları (Arayüzden değişecek)
     float update_rate_hz;         // Simülasyon frekansı (örn: 100 Hz)
-    Vector3_t external_force;     // Dış etkenler (Rüzgar vb.)
+    Vector3_t external_force;     // Dış etkenler
     int is_running;               // Simülasyon durumu (1: Çalışıyor, 0: Duraklatıldı)
-    Vector3_t target_accel;     // Arayüzden gelen hedef ivme değerleri
+    Vector3_t target_accel;       // Arayüzden gelen hedef ivme değerleri
     Vector3_t target_gyro;      // Arayüzden gelen hedef jiroskop değerleri
     Vector3_t initial_orientation;// Başlangıç Açıları (Roll, Pitch, Yaw)
 } SimSettings_t;

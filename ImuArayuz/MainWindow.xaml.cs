@@ -34,7 +34,7 @@ namespace ImuArayuz
 
         [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void sim_api_update_target_forces(float accel_x, float accel_y, float accel_z, 
-                                                                float gyro_x, float gyro_y, float gyro_z);
+                                                               float gyro_x, float gyro_y, float gyro_z);
 
         [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void sim_api_set_initial_orientation(float roll, float pitch, float yaw);
@@ -127,16 +127,17 @@ namespace ImuArayuz
                 cubeGroup.Children.Add(model);
             }
 
-            // Eksen Çubukları (X: Kırmızı, Y: Yeşil, Z: Mavi)
-            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(1.0, 0, 0), Brushes.Red));
-            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 1.0, 0), Brushes.Blue));
-            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 0, 1.0), Brushes.Green));
+            // Eksen Çubukları (X: Yeşil, Y: Kırmızı, Z: Mavi)
+            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(1.0, 0, 0), Brushes.Green));
+            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 1.0, 0), Brushes.Red));
+            cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 0, 1.0), Brushes.Blue));
 
-            Transform3DGroup tGroup = new Transform3DGroup();
-            tGroup.Children.Add(customTransform);
+            Transform3DGroup rootGroup = new Transform3DGroup();
+            rootGroup.Children.Add(customTransform);
+            rootGroup.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), -90)));
 
-            cubeGroup.Transform = tGroup;
-            transformGroup = tGroup;
+            cubeGroup.Transform = rootGroup;
+            transformGroup = rootGroup; // <--- DÜZELTİLEN SATIR
 
             return new ModelVisual3D { Content = cubeGroup };
         }
@@ -210,8 +211,7 @@ namespace ImuArayuz
             }
         }
 
-        // Başlangıç Açıları Değiştiğinde Anlık Uygulayan Metot
-       private void InitOrientation_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        private void InitOrientation_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
             if (!isInitialized) return;
             if (TxtInitRoll == null || TxtInitPitch == null || TxtInitYaw == null) return;
@@ -223,12 +223,11 @@ namespace ImuArayuz
             float.TryParse(TxtInitPitch.Text, numStyle, inv, out float pitch);
             float.TryParse(TxtInitYaw.Text, numStyle, inv, out float yaw);
 
-            // 1. C# tarafında 1. küpün (PRY) görsel açısını güncelle
+            // Z-up kök transformasyonu yapıldığı için açılar doğrudan eşleşir
             ((AxisAngleRotation3D)rotateX1.Rotation).Angle = roll;
             ((AxisAngleRotation3D)rotateY1.Rotation).Angle = pitch;
             ((AxisAngleRotation3D)rotateZ1.Rotation).Angle = yaw;
 
-            // 2. C motoruna başlangıç açılarını gönder (Böylece 2. küp yerçekimi dağılımını hesaplayabilsin)
             try
             {
                 sim_api_set_initial_orientation(roll, pitch, yaw);
@@ -247,10 +246,13 @@ namespace ImuArayuz
             var inv = System.Globalization.CultureInfo.InvariantCulture;
             var numStyle = System.Globalization.NumberStyles.Float;
 
-            float.TryParse(TxtAccelNoise.Text, numStyle, inv, out float aNoise);
-            float.TryParse(TxtGyroNoise.Text, numStyle, inv, out float gNoise);
+            float.TryParse(TxtAccelNoise.Text, numStyle, inv, out float aStdDev);
+            float.TryParse(TxtGyroNoise.Text, numStyle, inv, out float gStdDev);
 
-            sim_api_update_noise(aNoise, gNoise);
+            aStdDev = Math.Clamp(aStdDev, 0.0f, 5.0f);
+            gStdDev = Math.Clamp(gStdDev, 0.0f, 5.0f);
+
+            sim_api_update_noise(aStdDev, gStdDev);
         }
 
         private void Bias_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
@@ -304,7 +306,7 @@ namespace ImuArayuz
                 TxtAccel.Text = $"İvme (X, Y, Z): {ax:F2}, {ay:F2}, {az:F2}";
                 TxtGyro.Text  = $"Gyro (X, Y, Z): {gx:F2}, {gy:F2}, {gz:F2}";
 
-                // 1. Küp: PRY Modeli (Gyro Açısal Hız Entegrasyonu ile üzerine eklenerek döner)
+                // 1. Küp: PRY Modeli (Z-up uyumlu doğrudan eksen eşleşmesi)
                 ((AxisAngleRotation3D)rotateX1.Rotation).Angle += gx * elapsedSeconds * 50;
                 ((AxisAngleRotation3D)rotateY1.Rotation).Angle += gy * elapsedSeconds * 50;
                 ((AxisAngleRotation3D)rotateZ1.Rotation).Angle += gz * elapsedSeconds * 50;
