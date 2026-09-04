@@ -1,12 +1,9 @@
 #include "sim_set.h"
-
+#include "physics_engine.h"
 
 void sim_init_default(SimSettings_t *settings) {
     settings->is_running = 0;             // Başlangıçta duruyor
     settings->update_rate_hz = 100.0f;    // 100 Hz veri üretimi
-
-    settings->target_accel = (Vector3_t){0.0f, 0.0f, 0.0f};
-    settings->target_gyro = (Vector3_t){0.0f, 0.0f, 0.0f};
 
     settings->initial_orientation = (Vector3_t){0.0f, 0.0f, 0.0f};
 
@@ -15,6 +12,14 @@ void sim_init_default(SimSettings_t *settings) {
 
     settings->imu_settings.accel_bias = (Vector3_t){0.0f, 0.0f, 0.0f};
     settings->imu_settings.gyro_bias = (Vector3_t){0.0f, 0.0f, 0.0f};
+
+    // Fizik motoru varsayılan değerleri
+    settings->rigid_body.mass = 1.0f; 
+    settings->rigid_body.inertia_diag = (Vector3_t){0.01f, 0.01f, 0.01f}; 
+    settings->rigid_body.linear_damping = 0.0f;
+    settings->rigid_body.angular_damping = 0.0f;
+    settings->rigid_body.applied_force = (Vector3_t){0.0f, 0.0f, 0.0f};
+    settings->rigid_body.applied_torque = (Vector3_t){0.0f, 0.0f, 0.0f};
 
 }
 
@@ -40,11 +45,6 @@ void sim_update_hz(SimSettings_t *settings, float new_hz) {
         settings->update_rate_hz = new_hz;
     }
 }
-
-void sim_update_target_forces(SimSettings_t *settings, Vector3_t accel, Vector3_t gyro) {
-    settings->target_accel = accel;
-    settings->target_gyro = gyro;
-} 
 
 // Başlangıç açılarını (Roll, Pitch, Yaw) yapıya kaydeden fonksiyon
 void sim_update_initial_orientation(SimSettings_t *settings, float roll, float pitch, float yaw) {

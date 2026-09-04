@@ -31,11 +31,24 @@ SIM_API void sim_api_update_bias(float a_bias_x, float a_bias_y, float a_bias_z,
     sim_update_bias(&sim_settings, a_bias, g_bias);
 }
 
-SIM_API void sim_api_update_target_forces(float accel_x, float accel_y, float accel_z, 
-                                          float gyro_x, float gyro_y, float gyro_z) {
-    Vector3_t target_a = {accel_x, accel_y, accel_z};
-    Vector3_t target_g = {gyro_x, gyro_y, gyro_z};
-    sim_update_target_forces(&sim_settings, target_a, target_g);
+SIM_API void sim_api_set_body_params(float mass, float ixx, float iyy, float izz, 
+                                     float lin_damp, float ang_damp) 
+{
+    // Güvenlik: Kütle ve eylemsizlik 0 veya negatif olamaz
+    sim_settings.rigid_body.mass = (mass > 0.001f) ? mass : 1.0f;
+    sim_settings.rigid_body.inertia_diag.x = (ixx > 0.0001f) ? ixx : 0.01f;
+    sim_settings.rigid_body.inertia_diag.y = (iyy > 0.0001f) ? iyy : 0.01f;
+    sim_settings.rigid_body.inertia_diag.z = (izz > 0.0001f) ? izz : 0.01f;
+    
+    sim_settings.rigid_body.linear_damping = lin_damp;
+    sim_settings.rigid_body.angular_damping = ang_damp;
+}
+
+SIM_API void sim_api_set_applied_forces(float fx, float fy, float fz, 
+                                        float tx, float ty, float tz) 
+{
+    sim_settings.rigid_body.applied_force = (Vector3_t){fx, fy, fz};
+    sim_settings.rigid_body.applied_torque = (Vector3_t){tx, ty, tz};
 }
 
 #ifdef __cplusplus

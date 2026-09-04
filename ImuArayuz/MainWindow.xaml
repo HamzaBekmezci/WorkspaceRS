@@ -12,6 +12,15 @@
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0">
             <StackPanel>
                 <TextBlock Text="Simülasyon Kontrolleri" FontWeight="Bold" FontSize="16" Margin="0,0,0,15"/>
+                
+                <!-- YENİ: Senaryo Yükleme Butonu -->
+                <GroupBox Header="Senaryo (CSV) Yönetimi" Margin="0,0,0,15" Padding="10">
+                    <StackPanel>
+                        <TextBlock x:Name="TxtScenarioStatus" Text="Durum: Bekleniyor (CSV Yüklenmedi)" Foreground="DarkOrange" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <Button x:Name="BtnLoadScenario" Content="CSV Senaryo Yükle" Height="30" Click="LoadScenario_Click"/>
+                    </StackPanel>
+                </GroupBox>
+
                 <Button x:Name="BtnToggleSim" Content="Simülasyonu Başlat" Height="35" Background="#4CAF50" Foreground="White" FontWeight="Bold" Margin="0,0,0,15" Click="ToggleSim_Click"/>
 
                 <TextBlock Text="Güncelleme Frekansı (Hz):" Margin="0,0,0,5"/>
@@ -19,6 +28,29 @@
                     <TextBox x:Name="HzTextBox" Text="1000" Width="100" Height="25" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
                     <Button Content="Uygula" Width="80" Height="25" Click="ApplyHz_Click"/>
                 </StackPanel>
+
+                <!-- YENİ: Fiziksel Özellikler (Kütle, Atalet, Sürtünme) -->
+                <GroupBox Header="Fiziksel Özellikler (Gövde &amp; Ortam)" Margin="0,0,0,15" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="Kütle [kg]:" Margin="0,0,0,5"/>
+                        <TextBox x:Name="TxtMass" Text="1.0" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Atalet / Inertia (Ixx, Iyy, Izz) [kg*m²]:" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtIxx" Grid.Column="0" Text="0.01" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtIyy" Grid.Column="1" Text="0.01" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtIzz" Grid.Column="2" Text="0.01"/>
+                        </Grid>
+
+                        <TextBlock Text="Sönümleme (Doğrusal [N*s/m], Açısal [Nm*s/rad]):" Margin="0,0,0,5"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtLinDamp" Grid.Column="0" Text="0.05" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtAngDamp" Grid.Column="1" Text="0.01"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
 
                 <!-- Başlangıç / Manuel Yönelim (PRY) -->
                 <GroupBox Header="Başlangıç Açıları (Roll, Pitch, Yaw)" Margin="0,0,0,15" Padding="10">
@@ -33,7 +65,7 @@
                     </StackPanel>
                 </GroupBox>
 
-               <!-- İvmeölçer Standart Sapma ve Bias -->
+                <!-- İvmeölçer Standart Sapma ve Bias -->
                 <GroupBox Header="İvmeölçer (Accel) Hata Modeli" Margin="0,0,0,15" Padding="10">
                     <StackPanel>
                         <TextBlock Text="Standart Sapma (σ) [Aralık: 0.0 - 5.0]:" Margin="0,0,0,5" FontWeight="SemiBold"/>
@@ -61,27 +93,6 @@
                             <TextBox x:Name="TxtGyroBiasX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Bias_TextChanged"/>
                             <TextBox x:Name="TxtGyroBiasY" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="Bias_TextChanged"/>
                             <TextBox x:Name="TxtGyroBiasZ" Grid.Column="2" Text="0" TextChanged="Bias_TextChanged"/>
-                        </Grid>
-                    </StackPanel>
-                </GroupBox>
-
-                <!-- Hedef Kuvvetler / Hareket Girdileri -->
-                <GroupBox Header="Hedef Kuvvetler (Target Forces)" Margin="0,0,0,15" Padding="10">
-                    <StackPanel>
-                        <TextBlock Text="Hedef İvme (X, Y, Z) [m/s²]:" Margin="0,0,0,5"/>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <TextBox x:Name="TxtTargetAccelX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
-                            <TextBox x:Name="TxtTargetAccelY" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
-                            <TextBox x:Name="TxtTargetAccelZ" Grid.Column="2" Text="0" TextChanged="Target_TextChanged"/>
-                        </Grid>
-
-                        <TextBlock Text="Hedef Gyro / Açısal Hız (X, Y, Z) [rad/s]:" Margin="0,0,0,5"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <TextBox x:Name="TxtTargetGyroX" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
-                            <TextBox x:Name="TxtTargetGyroY" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="Target_TextChanged"/>
-                            <TextBox x:Name="TxtTargetGyroZ" Grid.Column="2" Text="0" TextChanged="Target_TextChanged"/>
                         </Grid>
                     </StackPanel>
                 </GroupBox>

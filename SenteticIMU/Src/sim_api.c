@@ -7,6 +7,7 @@
 #include "sim_set.h"
 #include "logger.h"
 #include "sim_api.h" 
+#include "physics_engine.h"
 
 // Hem ideal hem gürültülü durumları ayrı ayrı takip etmek için iki payload
 static KinematicState_t ideal_payload; 
@@ -85,21 +86,27 @@ SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, flo
     time_accumulator += elapsed_time_s;
 
     while (time_accumulator >= dt) {
-        Vector3_t target_accel = sim_settings.target_accel;
-        Vector3_t target_gyro = sim_settings.target_gyro;
+        
+        // 1. İDEAL SİSTEM: FİZİK VE KİNEMATİK ENTEGRASYONU
+        // Bu adım kendi içinde net kuvveti bulup integrate_kinematics'i tetikler.
+        physics_step(&ideal_payload, &sim_settings.rigid_body, dt);
 
-        integrate_kinematics(&ideal_payload, &target_accel, &target_gyro, dt);
+        // 2. SENSÖR MODELLEMESİ (Fizik motorunun bulduğu ideal ivme ve gyroyu okur)
         apply_sensor_model(&ideal_payload, &sim_settings.imu_settings, &sensor_output);
 
+        // 3. GÜRÜLTÜLÜ SİSTEM: KİNEMATİK ENTEGRASYON
+        // hatalı ivme ve gyro ile uzaydaki konumunu tahmin etmeye çalışır.
         Vector3_t noisy_accel = {sensor_output.accel_x, sensor_output.accel_y, sensor_output.accel_z};
         Vector3_t noisy_gyro = {sensor_output.gyro_x, sensor_output.gyro_y, sensor_output.gyro_z};
         integrate_kinematics(&noisy_payload, &noisy_accel, &noisy_gyro, dt);
 
+        // 4. LOGLAMA
         if (ideal_csv != NULL) {
+            // Loglamada artık target_accel yerine ideal_payload içindeki hesaplanmış fiziksel ivmeyi yazdırıyoruz
             logger_write_row(ideal_csv, t, 
                              ideal_payload.euler_angles.roll, ideal_payload.euler_angles.pitch, ideal_payload.euler_angles.yaw,
-                             target_accel.x, target_accel.y, target_accel.z,
-                             target_gyro.x, target_gyro.y, target_gyro.z);
+                             ideal_payload.acceleration.x, ideal_payload.acceleration.y, ideal_payload.acceleration.z,
+                             ideal_payload.angular_rate.x, ideal_payload.angular_rate.y, ideal_payload.angular_rate.z);
         }
         
         if (noisy_csv != NULL) {
@@ -119,9 +126,4 @@ SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, flo
     if(gyro_x) *gyro_x = sensor_output.gyro_x;
     if(gyro_y) *gyro_y = sensor_output.gyro_y;
     if(gyro_z) *gyro_z = sensor_output.gyro_z;
-}
-
-SIM_API void sim_close(void) {
-    if (ideal_csv != NULL) logger_close(ideal_csv);
-    if (noisy_csv != NULL) logger_close(noisy_csv);
 }

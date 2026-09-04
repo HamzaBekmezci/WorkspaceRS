@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -9,35 +8,7 @@ namespace ImuArayuz
 {
     public partial class MainWindow : Window
     {
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_init();
-
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_step_auto(float elapsed_time_s, out float acc_x, out float acc_y, out float acc_z, 
-                                                out float gyro_x, out float gyro_y, out float gyro_z);
-
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_close();
-
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_api_set_state(int state);
-
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_api_update_hz(float new_hz);
-
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_api_update_noise(float accel_noise, float gyro_noise);
-
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_api_update_bias(float a_bias_x, float a_bias_y, float a_bias_z, 
-                                                      float g_bias_x, float g_bias_y, float g_bias_z);
-
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_api_update_target_forces(float accel_x, float accel_y, float accel_z, 
-                                                               float gyro_x, float gyro_y, float gyro_z);
-
-        [DllImport("libImuSimulator.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void sim_api_set_initial_orientation(float roll, float pitch, float yaw);
+        private ScenarioManager simManager = new ScenarioManager();
 
         private System.Windows.Threading.DispatcherTimer uiTimer = new System.Windows.Threading.DispatcherTimer();
         private Stopwatch stopwatch = new Stopwatch();
@@ -65,7 +36,8 @@ namespace ImuArayuz
 
             try
             {
-                sim_init();
+                PhysicsEngineAPI.sim_init();
+                PhysicsEngineAPI.sim_api_set_body_params(1.0f, 0.01f, 0.01f, 0.01f, 0.0f, 0.0f);
             }
             catch (Exception ex)
             {
@@ -127,7 +99,6 @@ namespace ImuArayuz
                 cubeGroup.Children.Add(model);
             }
 
-            // Eksen Çubukları (X: Yeşil, Y: Kırmızı, Z: Mavi)
             cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(1.0, 0, 0), Brushes.Green));
             cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 1.0, 0), Brushes.Red));
             cubeGroup.Children.Add(CreateAxisBar(new Point3D(0, 0, 0), new Point3D(0, 0, 1.0), Brushes.Blue));
@@ -137,7 +108,7 @@ namespace ImuArayuz
             rootGroup.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), -90)));
 
             cubeGroup.Transform = rootGroup;
-            transformGroup = rootGroup; // <--- DÜZELTİLEN SATIR
+            transformGroup = rootGroup;
 
             return new ModelVisual3D { Content = cubeGroup };
         }
@@ -186,10 +157,10 @@ namespace ImuArayuz
             return new GeometryModel3D(mesh, new DiffuseMaterial(color));
         }
 
-        private void ToggleSim_Click(object sender, RoutedEventArgs e)
+       private void ToggleSim_Click(object? sender, RoutedEventArgs? e)
         {
             isSimRunning = (isSimRunning == 0) ? 1 : 0;
-            sim_api_set_state(isSimRunning);
+            PhysicsEngineAPI.sim_api_set_state(isSimRunning);
 
             if (isSimRunning == 1)
             {
@@ -203,11 +174,45 @@ namespace ImuArayuz
             }
         }
 
+        private void LoadScenario_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Filter = "CSV Dosyaları (*.csv)|*.csv|Tüm Dosyalar (*.*)|*.*";
+            
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    simManager.LoadCsv(openFileDialog.FileName);
+                    TxtScenarioStatus.Text = $"Durum: {System.IO.Path.GetFileName(openFileDialog.FileName)} Yüklendi";
+                    TxtScenarioStatus.Foreground = new SolidColorBrush(Colors.Green);
+
+                    var inv = System.Globalization.CultureInfo.InvariantCulture;
+                    var numStyle = System.Globalization.NumberStyles.Float;
+
+                    float.TryParse(TxtMass.Text, numStyle, inv, out float mass);
+                    float.TryParse(TxtIxx.Text, numStyle, inv, out float ixx);
+                    float.TryParse(TxtIyy.Text, numStyle, inv, out float iyy);
+                    float.TryParse(TxtIzz.Text, numStyle, inv, out float izz);
+                    float.TryParse(TxtLinDamp.Text, numStyle, inv, out float linDamp);
+                    float.TryParse(TxtAngDamp.Text, numStyle, inv, out float angDamp);
+
+                    simManager.StartSimulation(mass, ixx, iyy, izz, linDamp, angDamp);
+                    
+                    if (isSimRunning == 0) ToggleSim_Click(null, null);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("CSV yüklenirken hata oluştu: " + ex.Message);
+                }
+            }
+        }
+
         private void ApplyHz_Click(object sender, RoutedEventArgs e)
         {
             if (float.TryParse(HzTextBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float newHz))
             {
-                sim_api_update_hz(newHz);
+                PhysicsEngineAPI.sim_api_update_hz(newHz);
             }
         }
 
@@ -223,19 +228,11 @@ namespace ImuArayuz
             float.TryParse(TxtInitPitch.Text, numStyle, inv, out float pitch);
             float.TryParse(TxtInitYaw.Text, numStyle, inv, out float yaw);
 
-            // Z-up kök transformasyonu yapıldığı için açılar doğrudan eşleşir
             ((AxisAngleRotation3D)rotateX1.Rotation).Angle = roll;
             ((AxisAngleRotation3D)rotateY1.Rotation).Angle = pitch;
             ((AxisAngleRotation3D)rotateZ1.Rotation).Angle = yaw;
 
-            try
-            {
-                sim_api_set_initial_orientation(roll, pitch, yaw);
-            }
-            catch 
-            {
-                // DLL bağlantı hatası durumunda yoksay
-            }
+            try { PhysicsEngineAPI.sim_api_set_initial_orientation(roll, pitch, yaw); } catch { }
         }
 
         private void Noise_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
@@ -249,10 +246,7 @@ namespace ImuArayuz
             float.TryParse(TxtAccelNoise.Text, numStyle, inv, out float aStdDev);
             float.TryParse(TxtGyroNoise.Text, numStyle, inv, out float gStdDev);
 
-            aStdDev = Math.Clamp(aStdDev, 0.0f, 5.0f);
-            gStdDev = Math.Clamp(gStdDev, 0.0f, 5.0f);
-
-            sim_api_update_noise(aStdDev, gStdDev);
+            PhysicsEngineAPI.sim_api_update_noise(Math.Clamp(aStdDev, 0.0f, 5.0f), Math.Clamp(gStdDev, 0.0f, 5.0f));
         }
 
         private void Bias_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
@@ -266,31 +260,11 @@ namespace ImuArayuz
             float.TryParse(TxtAccelBiasX.Text, numStyle, inv, out float abX);
             float.TryParse(TxtAccelBiasY.Text, numStyle, inv, out float abY);
             float.TryParse(TxtAccelBiasZ.Text, numStyle, inv, out float abZ);
-
             float.TryParse(TxtGyroBiasX.Text, numStyle, inv, out float gbX);
             float.TryParse(TxtGyroBiasY.Text, numStyle, inv, out float gbY);
             float.TryParse(TxtGyroBiasZ.Text, numStyle, inv, out float gbZ);
 
-            sim_api_update_bias(abX, abY, abZ, gbX, gbY, gbZ);
-        }
-
-        private void Target_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-        {
-            if (!isInitialized) return;
-            if (TxtTargetAccelX == null || TxtTargetGyroX == null) return;
-
-            var inv = System.Globalization.CultureInfo.InvariantCulture;
-            var numStyle = System.Globalization.NumberStyles.Float;
-
-            float.TryParse(TxtTargetAccelX.Text, numStyle, inv, out float taX);
-            float.TryParse(TxtTargetAccelY.Text, numStyle, inv, out float taY);
-            float.TryParse(TxtTargetAccelZ.Text, numStyle, inv, out float taZ);
-
-            float.TryParse(TxtTargetGyroX.Text, numStyle, inv, out float tgX);
-            float.TryParse(TxtTargetGyroY.Text, numStyle, inv, out float tgY);
-            float.TryParse(TxtTargetGyroZ.Text, numStyle, inv, out float tgZ);
-
-            sim_api_update_target_forces(taX, taY, taZ, tgX, tgY, tgZ);
+            PhysicsEngineAPI.sim_api_update_bias(abX, abY, abZ, gbX, gbY, gbZ);
         }
 
         private void UiTimer_Tick(object? sender, EventArgs e)
@@ -300,18 +274,16 @@ namespace ImuArayuz
 
             try 
             {
-                sim_step_auto(elapsedSeconds, out float ax, out float ay, out float az, 
-                                            out float gx, out float gy, out float gz);
+                simManager.UpdateStep(elapsedSeconds, out float ax, out float ay, out float az, 
+                                                      out float gx, out float gy, out float gz);
                 
                 TxtAccel.Text = $"İvme (X, Y, Z): {ax:F2}, {ay:F2}, {az:F2}";
                 TxtGyro.Text  = $"Gyro (X, Y, Z): {gx:F2}, {gy:F2}, {gz:F2}";
 
-                // 1. Küp: PRY Modeli (Z-up uyumlu doğrudan eksen eşleşmesi)
                 ((AxisAngleRotation3D)rotateX1.Rotation).Angle += gx * elapsedSeconds * 50;
                 ((AxisAngleRotation3D)rotateY1.Rotation).Angle += gy * elapsedSeconds * 50;
                 ((AxisAngleRotation3D)rotateZ1.Rotation).Angle += gz * elapsedSeconds * 50;
 
-                // 2. Küp: Etki Kuvvetleri Modeli (Fiziksel İvme Vektör Hizalaması)
                 Vector3D refDir = new Vector3D(0, 0, -1); 
                 Vector3D accDir = new Vector3D(ax, ay, az);
 
@@ -345,7 +317,7 @@ namespace ImuArayuz
 
         protected override void OnClosed(EventArgs e)
         {
-            try { sim_close(); } catch { }
+            try { PhysicsEngineAPI.sim_close(); } catch { }
             base.OnClosed(e);
         }
     }
