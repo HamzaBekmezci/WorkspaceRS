@@ -19,23 +19,40 @@ void integrate_kinematics(KinematicState_t *state, const Vector3_t *body_accel,
      * 1. DOĞRUSAL İNTEGRASYON (Konum ve Hız)
      * ---------------------------------------------------------*/
 
+    // body_accel, gövde (body) eksenindedir. Konum/hız ise dünya (world) 
+    // ekseninde tutulduğu için, integrasyondan önce body -> world dönüşümü yapılmalı.
+    Matrix3x3_t dcm_w2b;   // world -> body (mevcut yönelime göre)
+    Matrix3x3_t dcm_b2w;   // body -> world (transpozu)
+    Vector3_t world_accel;
+
+    quat_to_dcm(&state->orientation, &dcm_w2b);
+    mat_transpose(&dcm_w2b, &dcm_b2w);
+    mat_vec_mult(&dcm_b2w, body_accel, &world_accel);
+
+    // state->acceleration alanını body-frame olarak saklamaya devam ediyoruz
+    // (sensor_engine.c bunu body-frame ivme olarak bekliyor).
     state->acceleration = *body_accel;
 
-    // Hızı güncelle (V = V0 + a*t)[cite: 1]
-    state->velocity.x += state->acceleration.x * dt;
-    state->velocity.y += state->acceleration.y * dt;
-    state->velocity.z += state->acceleration.z * dt;
+    // Hızı ve konumu artık WORLD-FRAME ivme ile güncelle
+    state->velocity.x += world_accel.x * dt;
+    state->velocity.y += world_accel.y * dt;
+    state->velocity.z += world_accel.z * dt;
 
-    // Konumu güncelle (X = X0 + v*t)[cite: 1]
     state->position.x += state->velocity.x * dt;
     state->position.y += state->velocity.y * dt;
     state->position.z += state->velocity.z * dt;
+
+    // C Motorunda zemin kontrolü
+    if (state->position.z < 0.0f) {
+        state->position.z = 0.0f;
+        state->velocity.z = 0.0f;
+    }
 
     /* ---------------------------------------------------------
      * 2. AÇISAL HIZ (ANGULAR RATE) GÜNCELLEMESİ
      * ---------------------------------------------------------*/
     
-     state->angular_rate = *body_gyro;
+     state->angular_rate = *body_gyro;   // burası zaten doğru, dokunma
 
     /* ---------------------------------------------------------
      * 3. AÇISAL İNTEGRASYON (Kuaterniyon Güncellemesi)

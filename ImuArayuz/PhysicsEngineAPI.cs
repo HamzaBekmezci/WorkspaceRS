@@ -35,7 +35,7 @@ public static class PhysicsEngineAPI {
                                                          float tx, float ty, float tz);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void sim_step_auto(float elapsed_time_s, 
-        out float acc_x, out float acc_y, out float acc_z, 
-        out float gyro_x, out float gyro_y, out float gyro_z);
+    public static extern void sim_step_auto(float elapsed_time_s, out float acc_x, out float acc_y, out float acc_z, 
+                                        out float gyro_x, out float gyro_y, out float gyro_z,
+                                        out float pos_x, out float pos_y, out float pos_z);
 }

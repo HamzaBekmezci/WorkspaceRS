@@ -42,10 +42,14 @@ public class ScenarioManager {
         _isRunning = true;
     }
 
-    public void UpdateStep(float dt, out float ax, out float ay, out float az, 
-                                     out float gx, out float gy, out float gz) 
+    public void UpdateStep(float dt, 
+                       out float ax, out float ay, out float az, 
+                       out float gx, out float gy, out float gz,
+                       out float posX, out float posY, out float posZ) 
     {
-        ax = ay = az = gx = gy = gz = 0;
+        ax = 0f; ay = 0f; az = 0f;
+        gx = 0f; gy = 0f; gz = 0f;
+        posX = 0f; posY = 0f; posZ = 0f;
         if (!_isRunning) return;
 
         float netFx = 0, netFy = 0, netFz = 0;
@@ -63,7 +67,8 @@ public class ScenarioManager {
         }
 
         PhysicsEngineAPI.sim_api_set_applied_forces(netFx, netFy, netFz, netTx, netTy, netTz);
-        PhysicsEngineAPI.sim_step_auto(dt, out ax, out ay, out az, out gx, out gy, out gz);
+        PhysicsEngineAPI.sim_step_auto(dt, out ax, out ay, out az, out gx, out gy, out gz,
+                                       out posX, out posY, out posZ);
 
         _simTime += dt;
     }

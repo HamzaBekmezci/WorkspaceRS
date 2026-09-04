@@ -8,22 +8,25 @@
 static void apply_environmental_damping(const KinematicState_t *state, const RigidBodyParams_t *body, 
                                         Vector3_t *net_force, Vector3_t *net_torque) 
 {
-    Vector3_t drag_force;
-    Vector3_t damping_torque;
+    // 1. DÜNYA (WORLD) HIZINI GÖVDE (BODY) HIZINA ÇEVİR
+    Matrix3x3_t dcm_w2b;
+    quat_to_dcm(&state->orientation, &dcm_w2b);
 
-    // Doğrusal sürtünme: F_drag = -c_lin * v
-    vec_scale(&state->velocity, -body->linear_damping, &drag_force); 
+    Vector3_t body_velocity;
+    mat_vec_mult(&dcm_w2b, &state->velocity, &body_velocity);
+
+    // 2. SÜRTÜNMEYİ GÖVDE HIZI ÜZERİNDEN HESAPLA
+    Vector3_t drag_force;
+    vec_scale(&body_velocity, -body->linear_damping, &drag_force); 
     
-    // Açısal sürtünme: Tau_drag = -c_ang * omega
+    // Açısal hız zaten Gövde (Body) eksenindedir
+    Vector3_t damping_torque;
     vec_scale(&state->angular_rate, -body->angular_damping, &damping_torque); 
 
-    // Dışarıdan uygulanan (senaryo) kuvvetine sürtünmeyi ekle
+    // 3. KUVVET VE TORKLARI TOPLA
     vec_add(&body->applied_force, &drag_force, net_force);
-    
-    // Dışarıdan uygulanan torka açısal sürtünmeyi ekle
     vec_add(&body->applied_torque, &damping_torque, net_torque);
 }
-
 
  // 2. RİJİT CİSİM DÖNME DİNAMİĞİ 
 static void compute_rotational_dynamics(KinematicState_t *state, const RigidBodyParams_t *body, 
@@ -67,7 +70,7 @@ static void compute_translational_dynamics(const RigidBodyParams_t *body, const 
 }
 
 
- // 4. ANA FİZİK MOTORU ADIMI (Main Physics Step)
+// 4. ANA FİZİK MOTORU ADIMI (Main Physics Step)
 void physics_step(KinematicState_t *state, const RigidBodyParams_t *body, float dt) 
 {
     Vector3_t net_force;
@@ -82,6 +85,22 @@ void physics_step(KinematicState_t *state, const RigidBodyParams_t *body, float 
 
     // 3. Adım: Net kuvvet üzerinden öteleme ivmesini (a) bul
     compute_translational_dynamics(body, &net_force, &body_accel);
+
+    // --- YERÇEKİMİNİ GÖVDE EKSENİNE ÇEVİR VE İVMEYE EKLE ---
+    Matrix3x3_t dcm_w2b;
+    // Mevcut kuaterniyon yöneliminden Dünya -> Gövde dönüşüm matrisini al
+    quat_to_dcm(&state->orientation, &dcm_w2b); 
+    
+    // Dünya (World) düzlemindeki sabit yerçekimi vektörü
+    Vector3_t global_gravity = {0.0f, 0.0f, -9.80665f}; 
+    Vector3_t body_gravity;
+    
+    // Sabit yerçekimini gövdenin o anki açısına göre döndür
+    mat_vec_mult(&dcm_w2b, &global_gravity, &body_gravity);
+    
+    // Gövdeye etki eden fiziksel kuvvetlerden doğan ivmeye, yerçekimi ivmesini ekle
+    vec_add(&body_accel, &body_gravity, &body_accel);
+    // -------------------------------------------------------
 
     // 4. Adım: Kinematik modeli çağırarak ivme ve açısal hızdan pozisyon/yönelim (kuaterniyon) türevlerini entegre et
     integrate_kinematics(state, &body_accel, &state->angular_rate, dt); 

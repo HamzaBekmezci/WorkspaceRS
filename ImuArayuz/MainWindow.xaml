@@ -1,6 +1,7 @@
 ﻿<Window x:Class="ImuArayuz.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:hx="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
         Title="IMU Simülasyon Kontrol Paneli" Height="820" Width="950">
     <Grid Margin="15">
         <Grid.ColumnDefinitions>
@@ -99,67 +100,41 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Sağ Taraf: 3D Küp Modelleri ve Lejand -->
+        <!-- Sağ Taraf: 3D Görselleştirme (Helix Toolkit) -->
         <Grid Grid.Column="1" Margin="10,0,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="3D Yönelim ve Kuvvet Görselleştirme" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+            <TextBlock Grid.Row="0" Text="Uzay Yörüngesi ve AIM-9 Yönelimi (6-DOF)" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
-            <!-- 1. Küp: Sensör Yönelimi (PRY) -->
-            <TextBlock Grid.Row="1" Text="Sensör Yönelimi (PRY Model)" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,3"/>
-            <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,10" Background="#1E1E1E">
-                <Viewport3D x:Name="ViewportPRY">
-                    <Viewport3D.Camera>
-                        <PerspectiveCamera Position="3, 3, -4" LookDirection="-3, -3, 4" UpDirection="0, 1, 0" FieldOfView="45"/>
-                    </Viewport3D.Camera>
-                    <ModelVisual3D>
-                        <ModelVisual3D.Content>
-                            <Model3DGroup>
-                                <AmbientLight Color="#808080"/>
-                                <DirectionalLight Color="#FFFFFF" Direction="-1,-2, 3"/>
-                            </Model3DGroup>
-                        </ModelVisual3D.Content>
-                    </ModelVisual3D>
-                </Viewport3D>
+            <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,10" Background="#1E1E1E">
+                <!-- Helix Toolkit Viewport'u kullanıyoruz -->
+                <hx:HelixViewport3D x:Name="ViewportTrajectory" ShowCoordinateSystem="True" ZoomExtentsWhenLoaded="True">
+    
+                    <!-- YENİ EKLENEN: Kamerayı açıkça tanımlıyoruz -->
+                  <hx:HelixViewport3D.Camera>
+                        <!-- Position: Kameranın uzayda durduğu yer (Yukarıdan, yandan ve önden bakış açısı) -->
+                        <!-- LookDirection: Kameranın baktığı merkez nokta (0,0,0 noktasına bakar) -->
+                        <PerspectiveCamera x:Name="FollowCamera" Position="20, 20, 20" LookDirection="-20, -20, -20" UpDirection="0,0,1"/>
+                  </hx:HelixViewport3D.Camera>
+
+                    <hx:DefaultLights/>
+                    
+                    <ModelVisual3D x:Name="RocketVisual"/>
+                    <hx:LinesVisual3D x:Name="TrajectoryTrail" Color="Red" Thickness="2"/>
+                    <hx:GridLinesVisual3D Length="50" Width="50" MajorDistance="10" MinorDistance="1" Thickness="0.01"/>
+                </hx:HelixViewport3D>
             </Border>
 
-            <!-- 2. Küp: Etki Kuvvetleri Modeli -->
-            <TextBlock Grid.Row="3" Text="Etki Kuvvetleri Modeli" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,3"/>
-            <Border Grid.Row="4" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,10" Background="#1E1E1E">
-                <Viewport3D x:Name="ViewportForces">
-                    <Viewport3D.Camera>
-                        <PerspectiveCamera Position="3, 3, -4" LookDirection="-3, -3, 4" UpDirection="0, 1, 0" FieldOfView="45"/>
-                    </Viewport3D.Camera>
-                    <ModelVisual3D>
-                        <ModelVisual3D.Content>
-                            <Model3DGroup>
-                                <AmbientLight Color="#808080"/>
-                                <DirectionalLight Color="#FFFFFF" Direction="-1,-2, 3"/>
-                            </Model3DGroup>
-                        </ModelVisual3D.Content>
-                    </ModelVisual3D>
-                </Viewport3D>
-            </Border>
-
-            <!-- Eksen Renk Lejandı -->
-            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                <TextBlock Text="Eksenler: " FontWeight="Bold" FontSize="12"/>
-                <TextBlock Text="X (Yeşil)" Foreground="Green" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
-                <TextBlock Text="Y (Kırmızı)" Foreground="Red" FontWeight="Bold" FontSize="12" Margin="8,0,8,0"/>
-                <TextBlock Text="Z (Mavi)" Foreground="Blue" FontWeight="Bold" FontSize="12" Margin="8,0,0,0"/>
+            <StackPanel Grid.Row="2">
+                <TextBlock x:Name="TxtAccel" Text="İvme (X,Y,Z): ..." FontSize="12" Margin="0,0,0,3"/>
+                <TextBlock x:Name="TxtGyro" Text="Gyro (X,Y,Z): ..." FontSize="12" Margin="0,0,0,3"/>
+                <TextBlock x:Name="TxtPosition" Text="Konum Uzay (X,Y,Z): ..." FontSize="12" Foreground="Yellow" FontWeight="Bold"/>
             </StackPanel>
-
-            <TextBlock Grid.Row="6" x:Name="TxtAccel" Text="İvme: ..." FontSize="12" Margin="0,0,0,3"/>
-            <TextBlock Grid.Row="7" x:Name="TxtGyro" Text="Gyro: ..." FontSize="12"/>
         </Grid>
-    </Grid>
+
+    </Grid> 
 </Window>

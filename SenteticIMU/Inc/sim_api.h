@@ -16,7 +16,8 @@ extern "C" {
 // C#'tan çağrılacak fonksiyonların prototipleri
 SIM_API void sim_init(void);
 SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, float* acc_z, 
-                           float* gyro_x, float* gyro_y, float* gyro_z);
+                           float* gyro_x, float* gyro_y, float* gyro_z,
+                           float* pos_x, float* pos_y, float* pos_z);
 SIM_API void sim_close(void);
 
 SIM_API void sim_api_set_state(int state);

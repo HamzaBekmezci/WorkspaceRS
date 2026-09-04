@@ -31,7 +31,7 @@ void apply_sensor_model(const KinematicState_t *ideal_state, const ImuConfig_t *
     quat_to_dcm(&ideal_state->orientation, &dcm);
 
     // Dünyadaki yerçekimi vektörü
-    Vector3_t global_gravity = {0.0f, 0.0f, GRAVITY};
+    Vector3_t global_gravity = {0.0f, 0.0f, -GRAVITY};
     Vector3_t body_gravity;
 
     // Yerçekimini, uydunun o anki açısına göre (DCM kullanarak) sensör eksenlerine dağıt

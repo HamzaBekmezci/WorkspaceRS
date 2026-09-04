@@ -76,7 +76,8 @@ SIM_API void sim_api_set_initial_orientation(float roll, float pitch, float yaw)
 }
 
 SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, float* acc_z, 
-                           float* gyro_x, float* gyro_y, float* gyro_z) {
+                           float* gyro_x, float* gyro_y, float* gyro_z,
+                           float* pos_x, float* pos_y, float* pos_z) {
     
     if (sim_settings.is_running == 0) return;
 
@@ -126,4 +127,9 @@ SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, flo
     if(gyro_x) *gyro_x = sensor_output.gyro_x;
     if(gyro_y) *gyro_y = sensor_output.gyro_y;
     if(gyro_z) *gyro_z = sensor_output.gyro_z;
+
+    // Gerçek dünya (world) konumlarını C# tarafına gönder
+    if(pos_x) *pos_x = ideal_payload.position.x;
+    if(pos_y) *pos_y = ideal_payload.position.y;
+    if(pos_z) *pos_z = ideal_payload.position.z;
 }
