@@ -42,7 +42,7 @@ namespace ImuArayuz
             {
                 PhysicsEngineAPI.sim_init();
                 // Başlangıç için varsayılan kütle ve atalet değerleri
-                PhysicsEngineAPI.sim_api_set_body_params(1.0f, 0.1f, 0.1f, 0.05f, 0.2f, 0.1f);
+                PhysicsEngineAPI.sim_api_set_body_params(25.0f, 0.1f, 0.1f, 0.05f, 0.2f, 0.1f, 0.5f, 0.1f, 2.5f);
             }
             catch (Exception ex)
             {
@@ -243,16 +243,25 @@ namespace ImuArayuz
                     float.TryParse(TxtLinDamp.Text, numStyle, inv, out float linDamp);
                     float.TryParse(TxtAngDamp.Text, numStyle, inv, out float angDamp);
 
+                    // YENİ: Aerodinamik katsayıları oku
+                    float.TryParse(TxtAeroStab.Text, numStyle, inv, out float aeroStab);
+                    float.TryParse(TxtAeroDamp.Text, numStyle, inv, out float aeroDamp);
+                    float.TryParse(TxtAeroLift.Text, numStyle, inv, out float aeroLift);
+
                     // Değerler sıfır veya mantıksız girildiyse çökmemesi için ufak koruma
                     if (mass <= 0) mass = 1.0f;
                     if (ixx <= 0) ixx = 0.01f;
+                    if (aeroStab < 0) aeroStab = 0.0f;
+                    if (aeroDamp < 0) aeroDamp = 0.0f;
+                    if (aeroLift < 0) aeroLift = 0.0f;
 
                     // Sistemi sıfırla ve başlat
                     _velX = _velY = _velZ = 0;
                     _posX = _posY = _posZ = 0;
                     trailPoints.Clear();
 
-                    simManager.StartSimulation(mass, ixx, iyy, izz, linDamp, angDamp);
+                    // YENİ: Yeni parametrelerle birlikte StartSimulation çağrısı
+                    simManager.StartSimulation(mass, ixx, iyy, izz, linDamp, angDamp, aeroStab, aeroDamp, aeroLift);
                     
                     // Simülasyon kapalıysa otomatik başlat
                     if (isSimRunning == 0) ToggleSim_Click(null, null);

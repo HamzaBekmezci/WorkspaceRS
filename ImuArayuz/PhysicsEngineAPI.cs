@@ -28,7 +28,8 @@ public static class PhysicsEngineAPI {
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void sim_api_set_body_params(float mass, float ixx, float iyy, float izz, 
-                                                      float lin_damp, float ang_damp);
+                                                  float lin_damp, float ang_damp,
+                                                  float aero_stab, float aero_damp, float aero_lift);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void sim_api_set_applied_forces(float fx, float fy, float fz, 

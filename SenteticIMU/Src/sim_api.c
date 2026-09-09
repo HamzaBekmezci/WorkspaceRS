@@ -23,13 +23,20 @@ static FILE *noisy_csv;
 SIM_API void sim_init(void) {
     srand((unsigned int)time(NULL));
     
-    // C# arayüzünden sim_init öncesi gelen başlangıç açılarını kaybetmemek için sakla
+    // 1. Arayüzden girilen TÜM ayarları (Gürültü, Fizik, Kütle, Yönelim, Frekans) yedekle
     Vector3_t saved_init_orient = sim_settings.initial_orientation;
+    ImuConfig_t saved_imu = sim_settings.imu_settings;
+    RigidBodyParams_t saved_body = sim_settings.rigid_body;
+    float saved_hz = sim_settings.update_rate_hz;
 
+    // 2. Sistemi varsayılana döndür (İstenmeyen durum)
     sim_init_default(&sim_settings); 
     
-    // Saklanan açıları geri yükle
+    // 3. Yedeklenen ayarları geri yükle (Arayüz değerlerinin sıfırlanmasını engelle)
     sim_settings.initial_orientation = saved_init_orient;
+    sim_settings.imu_settings = saved_imu;
+    sim_settings.rigid_body = saved_body;
+    sim_settings.update_rate_hz = saved_hz;
     
     sim_set_state(&sim_settings, 0); 
     t = 0.0f;

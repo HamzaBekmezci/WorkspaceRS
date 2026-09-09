@@ -21,6 +21,10 @@ typedef struct {
     // Dışarıdan Uygulanan Yükler (Senaryo Motoru/Kullanıcı tarafından beslenir)
     Vector3_t applied_force;    // Gövdeye uygulanan net dış kuvvet [N] (Örn: Motor itkisi)
     Vector3_t applied_torque;   // Gövdeye uygulanan net dış tork [Nm] (Örn: Kanatçık etkisi)
+
+    float aero_stability_coeff; // Kanatçıkların düzeltici tork katsayısı (Weathervane etkisi)
+    float aero_damping_coeff;   // Hıza bağlı dönüş sönümleme katsayısı (Salınımı durdurmak için)
+    float aero_lift_coeff;      // Yanal taşıma kuvveti katsayısı (Lift) [N/(m/s)^2]
 } RigidBodyParams_t;
 
 /* ==========================================================================

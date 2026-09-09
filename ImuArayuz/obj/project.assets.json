@@ -3620,11 +3620,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\VSCode Projects\\ImuArayuz\\ImuArayuz.csproj",
+      "projectUniqueName": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj",
       "projectName": "ImuArayuz",
-      "projectPath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\VSCode Projects\\ImuArayuz\\ImuArayuz.csproj",
+      "projectPath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj",
       "packagesPath": "C:\\Users\\stj.hamza.bekmezci\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\VSCode Projects\\ImuArayuz\\obj\\",
+      "outputPath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\stj.hamza.bekmezci\\AppData\\Roaming\\NuGet\\NuGet.Config"

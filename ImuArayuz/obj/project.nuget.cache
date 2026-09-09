@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "kimlo0Tv8/8=",
+  "dgSpecHash": "+miCm7j6BwI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\VSCode Projects\\ImuArayuz\\ImuArayuz.csproj",
+  "projectFilePath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\stj.hamza.bekmezci\\.nuget\\packages\\communitytoolkit.common\\8.3.2\\communitytoolkit.common.8.3.2.nupkg.sha512",
     "C:\\Users\\stj.hamza.bekmezci\\.nuget\\packages\\communitytoolkit.diagnostics\\8.3.2\\communitytoolkit.diagnostics.8.3.2.nupkg.sha512",

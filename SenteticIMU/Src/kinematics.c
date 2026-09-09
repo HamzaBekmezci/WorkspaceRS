@@ -52,7 +52,7 @@ void integrate_kinematics(KinematicState_t *state, const Vector3_t *body_accel,
      * 2. AÇISAL HIZ (ANGULAR RATE) GÜNCELLEMESİ
      * ---------------------------------------------------------*/
     
-     state->angular_rate = *body_gyro;   // burası zaten doğru, dokunma
+     state->angular_rate = *body_gyro;   
 
     /* ---------------------------------------------------------
      * 3. AÇISAL İNTEGRASYON (Kuaterniyon Güncellemesi)

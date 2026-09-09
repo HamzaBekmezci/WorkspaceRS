@@ -33,8 +33,9 @@
                 <!-- YENİ: Fiziksel Özellikler (Kütle, Atalet, Sürtünme) -->
                 <GroupBox Header="Fiziksel Özellikler (Gövde &amp; Ortam)" Margin="0,0,0,15" Padding="10">
                     <StackPanel>
+                        <!-- Mevcut Parametreler -->
                         <TextBlock Text="Kütle [kg]:" Margin="0,0,0,5"/>
-                        <TextBox x:Name="TxtMass" Text="1.0" Margin="0,0,0,10"/>
+                        <TextBox x:Name="TxtMass" Text="25.0" Margin="0,0,0,10"/>
 
                         <TextBlock Text="Atalet / Inertia (Ixx, Iyy, Izz) [kg*m²]:" Margin="0,0,0,5"/>
                         <Grid Margin="0,0,0,10">
@@ -44,11 +45,20 @@
                             <TextBox x:Name="TxtIzz" Grid.Column="2" Text="0.01"/>
                         </Grid>
 
-                        <TextBlock Text="Sönümleme (Doğrusal [N*s/m], Açısal [Nm*s/rad]):" Margin="0,0,0,5"/>
-                        <Grid>
+                        <TextBlock Text="Sönümleme (Doğrusal, Açısal):" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                             <TextBox x:Name="TxtLinDamp" Grid.Column="0" Text="0.05" Margin="0,0,5,0"/>
                             <TextBox x:Name="TxtAngDamp" Grid.Column="1" Text="0.01"/>
+                        </Grid>
+
+                        <!-- YENİ: Aerodinamik Parametreler -->
+                        <TextBlock Text="Aerodinamik (Denge, Sönümleme, Taşıma):" Margin="0,0,0,5" Foreground="LightSkyBlue"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtAeroStab" Grid.Column="0" Text="0.5" ToolTip="Düzeltme Tork Katsayısı" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtAeroDamp" Grid.Column="1" Text="0.1" ToolTip="Dinamik Dönüş Sönümleme" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtAeroLift" Grid.Column="2" Text="2.5" ToolTip="Yanal Taşıma (Lift) Katsayısı"/>
                         </Grid>
                     </StackPanel>
                 </GroupBox>

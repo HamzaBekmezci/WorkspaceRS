@@ -34,9 +34,15 @@ public class ScenarioManager {
         }
     }
 
-    public void StartSimulation(float mass, float ixx, float iyy, float izz, float linDamp, float angDamp) {
+    // YENİ EKLENEN AERODİNAMİK PARAMETRELER (aeroStab, aeroDamp, aeroLift)
+    public void StartSimulation(float mass, float ixx, float iyy, float izz, 
+                                float linDamp, float angDamp, 
+                                float aeroStab, float aeroDamp, float aeroLift) {
+        
         PhysicsEngineAPI.sim_init();
-        PhysicsEngineAPI.sim_api_set_body_params(mass, ixx, iyy, izz, linDamp, angDamp);
+        
+        // Güncellenmiş API çağrısı
+        PhysicsEngineAPI.sim_api_set_body_params(mass, ixx, iyy, izz, linDamp, angDamp, aeroStab, aeroDamp, aeroLift);
         
         _simTime = 0.0f;
         _isRunning = true;
@@ -50,6 +56,7 @@ public class ScenarioManager {
         ax = 0f; ay = 0f; az = 0f;
         gx = 0f; gy = 0f; gz = 0f;
         posX = 0f; posY = 0f; posZ = 0f;
+        
         if (!_isRunning) return;
 
         float netFx = 0, netFy = 0, netFz = 0;
