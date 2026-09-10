@@ -35,27 +35,16 @@ SIM_API void sim_api_set_body_params(float mass, float ixx, float iyy, float izz
                                      float lin_damp, float ang_damp,
                                      float aero_stab, float aero_damp, float aero_lift) 
 {
-    // Güvenlik: Kütle ve eylemsizlik 0 veya negatif olamaz
-    sim_settings.rigid_body.mass = (mass > 0.001f) ? mass : 1.0f;
-    sim_settings.rigid_body.inertia_diag.x = (ixx > 0.0001f) ? ixx : 0.01f;
-    sim_settings.rigid_body.inertia_diag.y = (iyy > 0.0001f) ? iyy : 0.01f;
-    sim_settings.rigid_body.inertia_diag.z = (izz > 0.0001f) ? izz : 0.01f;
-    
-    // Temel sönümleme ayarları
-    sim_settings.rigid_body.linear_damping = lin_damp;
-    sim_settings.rigid_body.angular_damping = ang_damp;
-
-    // Aerodinamik katsayıların atanması (Negatif girilmesini engellemek için güvenlik eklenebilir)
-    sim_settings.rigid_body.aero_stability_coeff = (aero_stab > 0.0f) ? aero_stab : 0.0f;
-    sim_settings.rigid_body.aero_damping_coeff   = (aero_damp > 0.0f) ? aero_damp : 0.0f;
-    sim_settings.rigid_body.aero_lift_coeff      = (aero_lift > 0.0f) ? aero_lift : 0.0f;
+    sim_update_body_params(&sim_settings, mass, ixx, iyy, izz, lin_damp, ang_damp, aero_stab, aero_damp, aero_lift);
 }
+
 
 SIM_API void sim_api_set_applied_forces(float fx, float fy, float fz, 
                                         float tx, float ty, float tz) 
 {
-    sim_settings.rigid_body.applied_force = (Vector3_t){fx, fy, fz};
-    sim_settings.rigid_body.applied_torque = (Vector3_t){tx, ty, tz};
+    Vector3_t force = {fx, fy, fz};
+    Vector3_t torque = {tx, ty, tz};
+    sim_update_applied_forces(&sim_settings, force, torque);
 }
 
 #ifdef __cplusplus

@@ -26,7 +26,7 @@
 
                 <TextBlock Text="Güncelleme Frekansı (Hz):" Margin="0,0,0,5"/>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                    <TextBox x:Name="HzTextBox" Text="1000" Width="100" Height="25" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox x:Name="HzTextBox" Text="100" Width="100" Height="25" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
                     <Button Content="Uygula" Width="80" Height="25" Click="ApplyHz_Click"/>
                 </StackPanel>
 
@@ -40,9 +40,9 @@
                         <TextBlock Text="Atalet / Inertia (Ixx, Iyy, Izz) [kg*m²]:" Margin="0,0,0,5"/>
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <TextBox x:Name="TxtIxx" Grid.Column="0" Text="0.01" Margin="0,0,5,0"/>
-                            <TextBox x:Name="TxtIyy" Grid.Column="1" Text="0.01" Margin="0,0,5,0"/>
-                            <TextBox x:Name="TxtIzz" Grid.Column="2" Text="0.01"/>
+                            <TextBox x:Name="TxtIxx" Grid.Column="0" Text="0.1" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtIyy" Grid.Column="1" Text="15.0" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtIzz" Grid.Column="2" Text="15.0"/>
                         </Grid>
 
                         <TextBlock Text="Sönümleme (Doğrusal, Açısal):" Margin="0,0,0,5"/>
@@ -56,9 +56,9 @@
                         <TextBlock Text="Aerodinamik (Denge, Sönümleme, Taşıma):" Margin="0,0,0,5" Foreground="LightSkyBlue"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <TextBox x:Name="TxtAeroStab" Grid.Column="0" Text="0.5" ToolTip="Düzeltme Tork Katsayısı" Margin="0,0,5,0"/>
-                            <TextBox x:Name="TxtAeroDamp" Grid.Column="1" Text="0.1" ToolTip="Dinamik Dönüş Sönümleme" Margin="0,0,5,0"/>
-                            <TextBox x:Name="TxtAeroLift" Grid.Column="2" Text="2.5" ToolTip="Yanal Taşıma (Lift) Katsayısı"/>
+                            <TextBox x:Name="TxtAeroStab" Grid.Column="0" Text="0.005" ToolTip="Düzeltme Tork Katsayısı" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtAeroDamp" Grid.Column="1" Text="0.5" ToolTip="Dinamik Dönüş Sönümleme" Margin="0,0,5,0"/>
+                            <TextBox x:Name="TxtAeroLift" Grid.Column="2" Text="1.0" ToolTip="Yanal Taşıma (Lift) Katsayısı"/>
                         </Grid>
                     </StackPanel>
                 </GroupBox>
@@ -70,7 +70,7 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                             <TextBox x:Name="TxtInitRoll" Grid.Column="0" Text="0" Margin="0,0,5,0" TextChanged="InitOrientation_TextChanged"/>
-                            <TextBox x:Name="TxtInitPitch" Grid.Column="1" Text="0" Margin="0,0,5,0" TextChanged="InitOrientation_TextChanged"/>
+                            <TextBox x:Name="TxtInitPitch" Grid.Column="1" Text="90" Margin="0,0,5,0" TextChanged="InitOrientation_TextChanged"/>
                             <TextBox x:Name="TxtInitYaw" Grid.Column="2" Text="0" TextChanged="InitOrientation_TextChanged"/>
                         </Grid>
                     </StackPanel>
@@ -135,7 +135,7 @@
                     
                     <ModelVisual3D x:Name="RocketVisual"/>
                     <hx:LinesVisual3D x:Name="TrajectoryTrail" Color="Red" Thickness="2"/>
-                    <hx:GridLinesVisual3D Length="50" Width="50" MajorDistance="10" MinorDistance="1" Thickness="0.01"/>
+                    <hx:GridLinesVisual3D Length="500" Width="500" MajorDistance="100" MinorDistance="1" Thickness="0.01"/>
                 </hx:HelixViewport3D>
             </Border>
 

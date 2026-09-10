@@ -22,5 +22,7 @@ void sim_update_bias(SimSettings_t *settings, Vector3_t a_bias, Vector3_t g_bias
 void sim_update_hz(SimSettings_t *settings, float new_hz);
 void sim_update_target_forces(SimSettings_t *settings, Vector3_t accel, Vector3_t gyro);
 void sim_update_initial_orientation(SimSettings_t *settings, float roll, float pitch, float yaw);
+void sim_update_body_params(SimSettings_t *settings, float mass, float ixx, float iyy, float izz, float lin_damp, float ang_damp, float aero_stab, float aero_damp, float aero_lift);
+void sim_update_applied_forces(SimSettings_t *settings, Vector3_t force, Vector3_t torque);
 
 #endif // SIM_SET_H

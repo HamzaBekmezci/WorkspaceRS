@@ -18,7 +18,6 @@ static void apply_environmental_and_aero_damping(const KinematicState_t *state,
     aero_force.x = -body->linear_damping * body_velocity->x;
 
     // Yanal Yönler (Y ve Z eksenleri) Taşıma/Direnç Kuvveti (Normal Force / Lift)
-    // float lift_coeff = 2.5f; // RigidBodyParams_t'ye eklenecek yeni katsayı
     
     // Yanal hız ne kadar yüksekse (hücum açısı ne kadar büyükse), 
     // yanal yüzeylere o kadar yüksek bir kuvvet etki eder.

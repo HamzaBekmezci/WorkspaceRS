@@ -53,6 +53,8 @@ namespace ImuArayuz
             isInitialized = true;
             stopwatch.Start();
 
+            InitOrientation_TextChanged(null!, null!);
+
             // UI Zamanlayıcısını Başlat (~60 Hz / FPS)
             uiTimer.Interval = TimeSpan.FromMilliseconds(16);
             uiTimer.Tick += UiTimer_Tick;
