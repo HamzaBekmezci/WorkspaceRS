@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj": {}
+    "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git_yeni\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj": {}
   },
   "projects": {
-    "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj": {
+    "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git_yeni\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj",
+        "projectUniqueName": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git_yeni\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj",
         "projectName": "ImuArayuz",
-        "projectPath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj",
+        "projectPath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git_yeni\\WorkspaceRS\\ImuArayuz\\ImuArayuz.csproj",
         "packagesPath": "C:\\Users\\stj.hamza.bekmezci\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git\\WorkspaceRS\\ImuArayuz\\obj\\",
+        "outputPath": "C:\\Users\\stj.hamza.bekmezci\\Desktop\\Git_yeni\\WorkspaceRS\\ImuArayuz\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\stj.hamza.bekmezci\\AppData\\Roaming\\NuGet\\NuGet.Config"
