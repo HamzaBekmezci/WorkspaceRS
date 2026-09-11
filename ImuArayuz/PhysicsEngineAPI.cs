@@ -1,5 +1,5 @@
 using System;
-using System.Runtime.InteropServices; // <--- BU SATIR EKSİK VEYA UNUTULMUŞ
+using System.Runtime.InteropServices; 
 
 public static class PhysicsEngineAPI {
     private const string DllName = "libImuSimulator.dll"; // Derlediğiniz DLL adı (CMake'de add_library ile verdiğiniz isim)
@@ -36,7 +36,8 @@ public static class PhysicsEngineAPI {
                                                          float tx, float ty, float tz);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void sim_step_auto(float elapsed_time_s, out float acc_x, out float acc_y, out float acc_z, 
-                                        out float gyro_x, out float gyro_y, out float gyro_z,
-                                        out float pos_x, out float pos_y, out float pos_z);
+    public static extern void sim_step_auto(float elapsed_time_s, 
+                                            out float acc_x, out float acc_y, out float acc_z, 
+                                            out float roll, out float pitch, out float yaw, 
+                                            out float pos_x, out float pos_y, out float pos_z);
 }

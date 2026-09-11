@@ -116,70 +116,58 @@ namespace ImuArayuz
 
             try 
             {
-                // 1. Fizik motorundan adımı işlet (Sensör verileri VE Gerçek Konum değerlerini al)
-                // NOT: C# tarafındaki DllImport sim_step_auto fonksiyonu imzasını ve 
-                // ScenarioManager.UpdateStep fonksiyonunu bu 3 yeni argümanı alacak şekilde güncellemeyi unutmayın.
-                simManager.UpdateStep(dt, out float ax, out float ay, out float az, 
-                                        out float gx, out float gy, out float gz,
-                                        out float posX, out float posY, out float posZ);
-                
-                // 2. Arayüzdeki yazı (Label) güncellemeleri[cite: 8]
-                TxtAccel.Text = $"İvme (X,Y,Z): {ax:F2}, {ay:F2}, {az:F2} m/s²";
-                TxtGyro.Text  = $"Gyro (X,Y,Z): {gx:F2}, {gy:F2}, {gz:F2} rad/s";
-                TxtPosition.Text = $"Konum (X,Y,Z): {posX:F2}, {posY:F2}, {posZ:F2} m";
+               simManager.UpdateStep(dt, out float ax, out float ay, out float az, 
+                      out float roll, out float pitch, out float yaw,
+                      out float posX, out float posY, out float posZ);
 
-                // 3. DÖNME (Rotation): Gyro (rad/s) verisini dereceye çevirip füzeyi döndürüyoruz
-                // NOT: X=Roll, Y=Pitch, Z=Yaw'dır. Görsel uyum için Pitch (gy) değerini çıkarıyoruz (-).
-                ((AxisAngleRotation3D)rocketRotateX.Rotation).Angle += gx * dt * (180.0 / Math.PI); // Roll (X ekseni)
-                ((AxisAngleRotation3D)rocketRotateY.Rotation).Angle -= gy * dt * (180.0 / Math.PI); // Pitch (Y ekseni) -> EKSİ YAPILDI
-                ((AxisAngleRotation3D)rocketRotateZ.Rotation).Angle += gz * dt * (180.0 / Math.PI); // Yaw (Z ekseni)
-
-                // 4. ÖTELEME (Translation): Doğrudan motorun verdiği gerçek konumu kullanıyoruz
-                // Görselin ekrandan taşmaması için uzaydaki pozisyonu 1/10 oranında ölçeklendiriyoruz
-                double scaledPosX = posX / 10.0;
-                double scaledPosY = posY / 10.0;
-                double scaledPosZ = posZ / 10.0;
-
-                rocketTranslate.OffsetX = scaledPosX;
-                rocketTranslate.OffsetY = scaledPosY;
-                rocketTranslate.OffsetZ = scaledPosZ;
-
-                // 5. KAMERA TAKİBİ (CHASE CAMERA)[cite: 8]
-                // Füzenin bu frame'de uzayda ne kadar yer değiştirdiğini (delta) bul
-                double dx = scaledPosX - lastPosX;
-                double dy = scaledPosY - lastPosY;
-                double dz = scaledPosZ - lastPosZ;
-
-                // Kamerayı doğrudan ismiyle (FollowCamera) güncelliyoruz[cite: 8]
-                if (FollowCamera != null)
+                // Sadece simülasyon "Başlat" durumundaysa UI ve modeli güncelle
+                if (isSimRunning == 1)
                 {
-                    FollowCamera.Position = new Point3D(FollowCamera.Position.X + dx, 
-                                                        FollowCamera.Position.Y + dy, 
-                                                        FollowCamera.Position.Z + dz);
-                }
+                    // 2. Arayüzdeki yazı (Label) güncellemeleri
+                    TxtAccel.Text = $"İvme (X,Y,Z): {ax:F2}, {ay:F2}, {az:F2} m/s²";
+                    TxtGyro.Text  = $"Açı (R,P,Y): {roll:F2}, {pitch:F2}, {yaw:F2} rad";
+                    TxtPosition.Text = $"Konum (X,Y,Z): {posX:F2}, {posY:F2}, {posZ:F2} m";
 
-                // Bir sonraki adımın delta hesabı için şu anki ölçeklenmiş konumu kaydet[cite: 8]
-                lastPosX = scaledPosX;
-                lastPosY = scaledPosY;
-                lastPosZ = scaledPosZ;
+                    // 3. DÖNME (Rotation)
+                    ((AxisAngleRotation3D)rocketRotateX.Rotation).Angle = roll * (180.0 / Math.PI); 
+                    ((AxisAngleRotation3D)rocketRotateY.Rotation).Angle = -pitch * (180.0 / Math.PI); 
+                    ((AxisAngleRotation3D)rocketRotateZ.Rotation).Angle = yaw * (180.0 / Math.PI);
 
-                // 6. İZ ÇİZİMİ (Trajectory Trail): Uzayda füzenin arkasından kırmızı bir çizgi bırak[cite: 8]
-                // Her karede değil, füze yarım metre (0.5) ilerlediğinde bir nokta koyuyoruz (Performans için)
-                if (trailPoints.Count == 0 || 
-                    Math.Abs(trailPoints[^1].X - scaledPosX) > 0.5 || 
-                    Math.Abs(trailPoints[^1].Y - scaledPosY) > 0.5 || 
-                    Math.Abs(trailPoints[^1].Z - scaledPosZ) > 0.5)
-                {
-                    trailPoints.Add(new Point3D(scaledPosX, scaledPosY, scaledPosZ));
-                    
-                    // İz çok uzayıp bilgisayarı yormasın diye sadece son 200 noktayı tutuyoruz[cite: 8]
-                    if (trailPoints.Count > 200) 
+                    // 4. ÖTELEME (Translation)
+                    double scaledPosX = posX / 10.0;
+                    double scaledPosY = posY / 10.0;
+                    double scaledPosZ = posZ / 10.0;
+
+                    rocketTranslate.OffsetX = scaledPosX;
+                    rocketTranslate.OffsetY = scaledPosY;
+                    rocketTranslate.OffsetZ = scaledPosZ;
+
+                    // 5. KAMERA TAKİBİ (CHASE CAMERA)
+                    double dx = scaledPosX - lastPosX;
+                    double dy = scaledPosY - lastPosY;
+                    double dz = scaledPosZ - lastPosZ;
+
+                    if (FollowCamera != null)
                     {
-                        trailPoints.RemoveAt(0);
+                        FollowCamera.Position = new Point3D(FollowCamera.Position.X + dx, 
+                                                            FollowCamera.Position.Y + dy, 
+                                                            FollowCamera.Position.Z + dz);
                     }
-                    
-                    // Çizgiyi arayüze (HelixToolkit) yansıt[cite: 8]
-                    TrajectoryTrail.Points = trailPoints;
+
+                    lastPosX = scaledPosX;
+                    lastPosY = scaledPosY;
+                    lastPosZ = scaledPosZ;
+
+                    // 6. İZ ÇİZİMİ (Trajectory Trail)
+                    if (trailPoints.Count == 0 || 
+                        Math.Abs(trailPoints[^1].X - scaledPosX) > 0.5 || 
+                        Math.Abs(trailPoints[^1].Y - scaledPosY) > 0.5 || 
+                        Math.Abs(trailPoints[^1].Z - scaledPosZ) > 0.5)
+                    {
+                        trailPoints.Add(new Point3D(scaledPosX, scaledPosY, scaledPosZ));
+                        if (trailPoints.Count > 200) trailPoints.RemoveAt(0);
+                        TrajectoryTrail.Points = trailPoints;
+                    }
                 }
             }
             catch 
