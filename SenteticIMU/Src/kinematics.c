@@ -21,12 +21,13 @@ void integrate_kinematics(KinematicState_t *state, const Vector3_t *body_accel,
 
     // body_accel, gövde (body) eksenindedir. Konum/hız ise dünya (world) 
     // ekseninde tutulduğu için, integrasyondan önce body -> world dönüşümü yapılmalı.
-    Matrix3x3_t dcm_w2b;   // world -> body (mevcut yönelime göre)
-    Matrix3x3_t dcm_b2w;   // body -> world (transpozu)
+    // quat_to_dcm zaten Body'den World'e (b2w) dönüşüm matrisi üretir.
+    Matrix3x3_t dcm_b2w;   
     Vector3_t world_accel;
 
-    quat_to_dcm(&state->orientation, &dcm_w2b);
-    mat_transpose(&dcm_w2b, &dcm_b2w);
+    quat_to_dcm(&state->orientation, &dcm_b2w);
+    
+    // Doğrudan b2w ile body ivmesini world ivmesine çevir
     mat_vec_mult(&dcm_b2w, body_accel, &world_accel);
 
     // state->acceleration alanını body-frame olarak saklamaya devam ediyoruz

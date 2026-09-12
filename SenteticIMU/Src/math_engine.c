@@ -141,25 +141,24 @@ void euler_to_quat(const EulerAngles_t *euler, Quaternion_t *q) {
 }
 
 void quat_to_euler(const Quaternion_t *q, EulerAngles_t *euler) {
-    // 1. ROLL (X ekseni etrafında dönüş)
-    float sinr_cosp = 2.0f * (q->w * q->x + q->y * q->z);
-    float cosr_cosp = 1.0f - 2.0f * (q->x * q->x + q->y * q->y);
-    euler->roll = atan2f(sinr_cosp, cosr_cosp);
-
-    // 2. PITCH (Y ekseni etrafında dönüş)
     float sinp = 2.0f * (q->w * q->y - q->z * q->x);
-    // Güvenlik: Floating point hatalarından dolayı sinp 1'i veya -1'i çok küçük farkla geçebilir.
-    // asinf() fonksiyonu -1 ile 1 dışındaki değerlerde NaN döndürür. Bunu engellemek için sınırlandırıyoruz.
-    if (sinp >= 1.0f) {
-        euler->pitch = 1.570796f; // pi/2 (90 derece - Yukarı tam dikilme)
-    } else if (sinp <= -1.0f) {
-        euler->pitch = -1.570796f; // -pi/2 (-90 derece - Aşağı tam dikilme)
-    } else {
-        euler->pitch = asinf(sinp);
-    }
 
-    // 3. YAW (Z ekseni etrafında dönüş)
-    float siny_cosp = 2.0f * (q->w * q->z + q->x * q->y);
-    float cosy_cosp = 1.0f - 2.0f * (q->y * q->y + q->z * q->z);
-    euler->yaw = atan2f(siny_cosp, cosy_cosp);
+    // Gimbal lock (Pitch = +90 veya -90) kontrolü
+    if (fabsf(sinp) >= 0.999f) {
+        // Pitch tam dik, Roll ve Yaw kilitlendi (Gimbal Lock)
+        euler->pitch = copysignf(1.570796f, sinp);
+        euler->roll = 0.0f; // Roll'u 0 kabul edip tüm açıyı Yaw'a atıyoruz
+        euler->yaw = 2.0f * atan2f(q->z, q->w);
+    } else {
+        // Normal durum
+        euler->pitch = asinf(sinp);
+        
+        float sinr_cosp = 2.0f * (q->w * q->x + q->y * q->z);
+        float cosr_cosp = 1.0f - 2.0f * (q->x * q->x + q->y * q->y);
+        euler->roll = atan2f(sinr_cosp, cosr_cosp);
+        
+        float siny_cosp = 2.0f * (q->w * q->z + q->x * q->y);
+        float cosy_cosp = 1.0f - 2.0f * (q->y * q->y + q->z * q->z);
+        euler->yaw = atan2f(siny_cosp, cosy_cosp);
+    }
 }

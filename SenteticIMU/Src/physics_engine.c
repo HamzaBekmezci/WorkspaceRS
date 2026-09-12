@@ -8,6 +8,7 @@
 static void apply_environmental_and_aero_damping(const KinematicState_t *state, 
                                                  const RigidBodyParams_t *body, 
                                                  const Vector3_t *body_velocity, 
+                                                 float dt,
                                                  Vector3_t *net_force, 
                                                  Vector3_t *net_torque) 
 {
@@ -17,12 +18,32 @@ static void apply_environmental_and_aero_damping(const KinematicState_t *state,
     // İleri yön (X ekseni) sürtünmesi (Mevcut Drag)
     aero_force.x = -body->linear_damping * body_velocity->x;
 
-    // Yanal Yönler (Y ve Z eksenleri) Taşıma/Direnç Kuvveti (Normal Force / Lift)
+    // --- YANAL KUVVETLER VE STALL (TUTUNMA KAYBI) MODELİ ---
+    // Füze hafif açılı uçarken çok yüksek Lift (Taşıma) üretir, böylece manevra yapabilir.
+    // Ancak yan düştüğünde (Hücum Açısı > 25-30 derece) kanatçıklar hava akışını koparır (Stall).
+    // Bu durumda Lift kuvveti dramatik şekilde çöker ve paraşüt etkisi ortadan kalkar.
     
-    // Yanal hız ne kadar yüksekse (hücum açısı ne kadar büyükse), 
-    // yanal yüzeylere o kadar yüksek bir kuvvet etki eder.
-    aero_force.y = -body->aero_lift_coeff * body_velocity->y * fabsf(body_velocity->y); 
-    aero_force.z = -body->aero_lift_coeff * body_velocity->z * fabsf(body_velocity->z);
+    float fy = -body->aero_lift_coeff * body_velocity->y * fabsf(body_velocity->y); 
+    float fz = -body->aero_lift_coeff * body_velocity->z * fabsf(body_velocity->z);
+
+    float v_lat_sq = (body_velocity->y * body_velocity->y) + (body_velocity->z * body_velocity->z);
+    float v_tot_sq = (body_velocity->x * body_velocity->x) + v_lat_sq;
+
+    if (v_tot_sq > 0.1f) {
+        float sin2_alpha = v_lat_sq / v_tot_sq; // Hücum açısının sinüs karesi
+        float stall_threshold = 0.18f;          // Yaklaşık 25 derece hücum açısı limiti
+
+        if (sin2_alpha > stall_threshold) {
+            // Açıklık arttıkça (füze yan döndükçe) Lift kuvveti hızla azalır (Stall Çöküşü)
+            float excess = (sin2_alpha - stall_threshold) / (1.0f - stall_threshold); // 0.0 - 1.0 arası
+            float stall_factor = 1.0f - 0.95f * excess; // Kuvvet %5'ine kadar düşer (Paraşüt etkisini yokedir)
+            fy *= stall_factor;
+            fz *= stall_factor;
+        }
+    }
+
+    aero_force.y = fy;
+    aero_force.z = fz;
 
     // Hızın karesi (v * |v|) dinamik basıncı simüle eder ve yönü korur.
 
@@ -34,8 +55,26 @@ static void apply_environmental_and_aero_damping(const KinematicState_t *state,
 
     float dynamic_damping_factor = body->angular_damping + (body->aero_damping_coeff * speed);
     
+    // Sayısal patlamayı (Numerical Instability) önlemek için maksimum sönümleme torkunu sınırla:
+    // T_max = (I * omega) / dt. Bu değer omega'yı tam 0'a indirecek torktur.
+    float max_tx = fabsf(body->inertia_diag.x * state->angular_rate.x / dt);
+    float max_ty = fabsf(body->inertia_diag.y * state->angular_rate.y / dt);
+    float max_tz = fabsf(body->inertia_diag.z * state->angular_rate.z / dt);
+
     Vector3_t damping_torque;
-    vec_scale(&state->angular_rate, -dynamic_damping_factor, &damping_torque); 
+    damping_torque.x = -dynamic_damping_factor * state->angular_rate.x;
+    damping_torque.y = -dynamic_damping_factor * state->angular_rate.y;
+    damping_torque.z = -dynamic_damping_factor * state->angular_rate.z;
+
+    // Eğer sönümleme torku, hızı tersine çevirecek kadar büyükse (dt * T / I > omega), sınırla:
+    if (damping_torque.x > max_tx) damping_torque.x = max_tx;
+    if (damping_torque.x < -max_tx) damping_torque.x = -max_tx;
+    
+    if (damping_torque.y > max_ty) damping_torque.y = max_ty;
+    if (damping_torque.y < -max_ty) damping_torque.y = -max_ty;
+    
+    if (damping_torque.z > max_tz) damping_torque.z = max_tz;
+    if (damping_torque.z < -max_tz) damping_torque.z = -max_tz;
 
 
     // --- 3. KUVVET VE TORKLARI TOPLA ---
@@ -64,7 +103,7 @@ static void apply_aerodynamic_restoring_torque(const RigidBodyParams_t *body,
     // error_axis = nose_dir x body_velocity
     // Bu vektör dönüş eksenini ve sin(alpha) sapma miktarını barındırır
     Vector3_t error_axis;
-    vec_cross(body_velocity, &nose_dir, &error_axis);
+    vec_cross(&nose_dir, body_velocity, &error_axis);
 
     // Aerodinamik Tork = Katsayı * Hız * Sapma_Ekseni
     // error_axis büyüklüğü |v| ile orantılıdır. Bunu bir kez daha 'speed' ile çarpmak,
@@ -126,40 +165,32 @@ void physics_step(KinematicState_t *state, const RigidBodyParams_t *body, float 
     Vector3_t body_accel;
 
     // --- 1. DÜNYA (WORLD) HIZINI GÖVDE (BODY) HIZINA ÇEVİR ---
+    Matrix3x3_t dcm_b2w; // quat_to_dcm Body'den World'e dönüşüm matrisi üretir
+    quat_to_dcm(&state->orientation, &dcm_b2w); 
+
     Matrix3x3_t dcm_w2b;
-    quat_to_dcm(&state->orientation, &dcm_w2b); // Kuaterniyondan Dönüşüm Matrisi elde et
+    mat_transpose(&dcm_b2w, &dcm_w2b); // Transpozu World'den Body'ye dönüşüm matrisidir
 
     Vector3_t body_velocity;
     mat_vec_mult(&dcm_w2b, &state->velocity, &body_velocity);
 
     // --- 2. SÖNÜMLEME VE AERODİNAMİK HESAPLAMALARI ---
-    // a) Sürtünme ve hıza bağlı açısal sönümlemeyi uygula
-    apply_environmental_and_aero_damping(state, body, &body_velocity, &net_force, &net_torque);
-
-    // b) Yönelimi hıza hizalayan aerodinamik (kanatçık) torkunu uygula
+    apply_environmental_and_aero_damping(state, body, &body_velocity, dt, &net_force, &net_torque);
     apply_aerodynamic_restoring_torque(body, &body_velocity, &net_torque);
 
-
     // --- 3. DİNAMİK HESAPLAMALAR ---
-    // Rotasyonel dinamik (Jiroskopik etkiler dahil açısal ivmeyi bul ve omega'yı güncelle)
     compute_rotational_dynamics(state, body, &net_torque, dt);
-
-    // Öteleme dinamiği (a = F/m)       
     compute_translational_dynamics(body, &net_force, &body_accel);
 
-
     // --- 4. YERÇEKİMİ ENTEGRASYONU ---
-    // Dünya eksenindeki yerçekimini gövde eksenine çevir
     Vector3_t global_gravity = {0.0f, 0.0f, -9.80665f}; 
     Vector3_t body_gravity;
     
+    // Doğru matris (w2b) ile yerçekimini body eksenine çevir
     mat_vec_mult(&dcm_w2b, &global_gravity, &body_gravity);
     
-    // İvmeye yerçekimini ekle
     vec_add(&body_accel, &body_gravity, &body_accel);
 
-
     // --- 5. KİNEMATİK ENTEGRASYON ---
-    // İvme ve açısal hızı entegre ederek yeni pozisyon ve yönelimi (kuaterniyon) bul
     integrate_kinematics(state, &body_accel, &state->angular_rate, dt); 
 }

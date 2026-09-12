@@ -6,7 +6,11 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
 # Performans optimizasyonu ve uyarılar
-add_compile_options(-Wall -Wextra -O2)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra -O2)
+elseif(MSVC)
+    add_compile_options(/W4)
+endif()
 
 # 1. Ortak Kaynak Dosyaları
 set(MOTOR_KAYNAKLAR 
@@ -30,4 +34,6 @@ add_library(ImuSimulator SHARED ${MOTOR_KAYNAKLAR})
 target_include_directories(ImuSimulator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Inc)
 
 # 5. Matematik Kütüphanesi Bağlantısı
-target_link_libraries(ImuSimulator PRIVATE m)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_link_libraries(ImuSimulator PRIVATE m)
+endif()

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
@@ -130,7 +130,7 @@ namespace ImuArayuz
 
                     // 3. DÖNME (Rotation)
                     ((AxisAngleRotation3D)rocketRotateX.Rotation).Angle = roll * (180.0 / Math.PI); 
-                    ((AxisAngleRotation3D)rocketRotateY.Rotation).Angle = -pitch * (180.0 / Math.PI); 
+                    ((AxisAngleRotation3D)rocketRotateY.Rotation).Angle = pitch * (180.0 / Math.PI); 
                     ((AxisAngleRotation3D)rocketRotateZ.Rotation).Angle = yaw * (180.0 / Math.PI);
 
                     // 4. ÖTELEME (Translation)
@@ -302,9 +302,9 @@ namespace ImuArayuz
             float.TryParse(TxtInitPitch.Text, numStyle, inv, out float pitch);
             float.TryParse(TxtInitYaw.Text, numStyle, inv, out float yaw);
 
-            // WPF'in Y ekseni fizik motoruna göre terstir, bu yüzden görsel pitch'i eksi (-) yapıyoruz
+            // Görsel pitch'i artık fizik motoruyla birebir kullanıyoruz (Standart havacılık ekseni)
             ((AxisAngleRotation3D)rocketRotateX.Rotation).Angle = roll;
-            ((AxisAngleRotation3D)rocketRotateY.Rotation).Angle = -pitch; // EKSİ YAPILDI
+            ((AxisAngleRotation3D)rocketRotateY.Rotation).Angle = pitch;
             ((AxisAngleRotation3D)rocketRotateZ.Rotation).Angle = yaw;
 
             try { PhysicsEngineAPI.sim_api_set_initial_orientation(roll, pitch, yaw); } catch { }

@@ -5,7 +5,7 @@ void sim_init_default(SimSettings_t *settings) {
     settings->is_running = 0;             // Başlangıçta duruyor
     settings->update_rate_hz = 100.0f;    // 100 Hz veri üretimi
 
-    settings->initial_orientation = (Vector3_t){0.0f, 90.0f, 0.0f};
+    settings->initial_orientation = (Vector3_t){0.0f, -90.0f, 0.0f};
 
     settings->imu_settings.accel_noise_std = 0.0f;
     settings->imu_settings.gyro_noise_std = 0.0f;
