@@ -22,6 +22,7 @@ set(MOTOR_KAYNAKLAR
     Src/sim_set.c
     Src/sim_set_api.c
     Src/physics_engine.c
+    Src/autopilot.c
 )
 
 message(STATUS ">>> SentetikIMU: DLL Modu Aktif <<<")

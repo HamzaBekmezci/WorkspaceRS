@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "sim_api.h" 
 #include "physics_engine.h"
+#include "autopilot.h"
 
 // Hem ideal hem gürültülü durumları ayrı ayrı takip etmek için iki payload
 static KinematicState_t ideal_payload; 
@@ -19,6 +20,10 @@ SimSettings_t sim_settings;
 // İki ayrı dosya işaretçisi
 static FILE *ideal_csv;
 static FILE *noisy_csv;
+
+SIM_API void sim_api_set_waypoint(float target_x, float target_y, float target_z) {
+    autopilot_set_waypoint(target_x, target_y, target_z);
+}
 
 SIM_API void sim_init(void) {
     srand((unsigned int)time(NULL));
@@ -63,7 +68,7 @@ SIM_API void sim_init(void) {
     noisy_payload.euler_angles = ideal_payload.euler_angles;
 
     // Log dosyalarını başlat
-    const char *header = "Time_s,Roll,Pitch,Yaw,Accel_X,Accel_Y,Accel_Z,Gyro_X,Gyro_Y,Gyro_Z";
+    const char *header = "Time_s,Roll,Pitch,Yaw,Pos_X,Pos_Y,Pos_Z,Accel_X,Accel_Y,Accel_Z,Gyro_X,Gyro_Y,Gyro_Z";
     ideal_csv = logger_init("ideal_output.csv", header);
     noisy_csv = logger_init("noisy_output.csv", header);
 }
@@ -98,6 +103,8 @@ SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, flo
     time_accumulator += elapsed_time_s;
 
     while (time_accumulator >= dt) {
+        // Fizik entegrasyonu öncesi hedefe göre kanatçık torklarını ve motor itkisini hesaplar
+        autopilot_step(&ideal_payload, &sim_settings.rigid_body, dt);
         
         // 1. İDEAL SİSTEM: FİZİK VE KİNEMATİK ENTEGRASYONU
         // Bu adım kendi içinde net kuvveti bulup integrate_kinematics'i tetikler.
@@ -113,10 +120,10 @@ SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, flo
         integrate_kinematics(&noisy_payload, &noisy_accel, &noisy_gyro, dt);
 
         // 4. LOGLAMA
-        if (ideal_csv != NULL) {
-            // Loglamada artık target_accel yerine ideal_payload içindeki hesaplanmış fiziksel ivmeyi yazdırıyoruz
+       if (ideal_csv != NULL) {
             logger_write_row(ideal_csv, t, 
                              ideal_payload.euler_angles.roll, ideal_payload.euler_angles.pitch, ideal_payload.euler_angles.yaw,
+                             ideal_payload.position.x, ideal_payload.position.y, ideal_payload.position.z, // YENİ EKLENEN
                              ideal_payload.acceleration.x, ideal_payload.acceleration.y, ideal_payload.acceleration.z,
                              ideal_payload.angular_rate.x, ideal_payload.angular_rate.y, ideal_payload.angular_rate.z);
         }
@@ -124,6 +131,7 @@ SIM_API void sim_step_auto(float elapsed_time_s, float* acc_x, float* acc_y, flo
         if (noisy_csv != NULL) {
             logger_write_row(noisy_csv, t, 
                              noisy_payload.euler_angles.roll, noisy_payload.euler_angles.pitch, noisy_payload.euler_angles.yaw,
+                             noisy_payload.position.x, noisy_payload.position.y, noisy_payload.position.z, // YENİ EKLENEN
                              noisy_accel.x, noisy_accel.y, noisy_accel.z,
                              noisy_gyro.x, noisy_gyro.y, noisy_gyro.z);
         }

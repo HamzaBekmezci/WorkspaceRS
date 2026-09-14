@@ -11,10 +11,12 @@ FILE* logger_init(const char *filename, const char *header) {
 }
 
 void logger_write_row(FILE *file, float time, float roll, float pitch, float yaw, 
+                      float px, float py, float pz, 
                       float ax, float ay, float az, float gx, float gy, float gz) {
     if (file != NULL) {
-        fprintf(file, "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
-                time, roll, pitch, yaw, ax, ay, az, gx, gy, gz);
+        // Konum için 3 adet daha %.4f formatı eklendi (toplam 13 veri sütunu)
+        fprintf(file, "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
+                time, roll, pitch, yaw, px, py, pz, ax, ay, az, gx, gy, gz);
         fflush(file);
     }
 }

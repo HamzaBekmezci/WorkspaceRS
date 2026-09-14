@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -25,10 +26,10 @@ namespace ImuArayuz
         // Yörünge İzi (Kuyruk) Noktaları Koleksiyonu
         private Point3DCollection trailPoints = new Point3DCollection();
 
-        // Konum hesaplaması için geçici hız/konum tutucuları
-        private double _velX = 0, _velY = 0, _velZ = 0;
-        private double _posX = 0, _posY = 0, _posZ = 0;
         private double lastPosX = 0, lastPosY = 0, lastPosZ = 0;
+
+        private bool isFullscreen = false;
+        private GridLength lastColumnWidth;
 
         public MainWindow()
         {
@@ -126,7 +127,15 @@ namespace ImuArayuz
                     // 2. Arayüzdeki yazı (Label) güncellemeleri
                     TxtAccel.Text = $"İvme (X,Y,Z): {ax:F2}, {ay:F2}, {az:F2} m/s²";
                     TxtGyro.Text  = $"Açı (R,P,Y): {roll:F2}, {pitch:F2}, {yaw:F2} rad";
-                    TxtPosition.Text = $"Konum (X,Y,Z): {posX:F2}, {posY:F2}, {posZ:F2} m";
+                    
+                    // Füzenin konumu ve gitmeye çalıştığı hedefi alt alta yazdırıyoruz
+                    if (simManager.HasActiveWaypoint) {
+                        TxtPosition.Text = $"Konum: {posX:F2}, {posY:F2}, {posZ:F2} m\n" +
+                                           $"Sıradaki Hedef [{simManager.CurrentTargetName}]: {simManager.TargetX}, {simManager.TargetY}, {simManager.TargetZ}";
+                    } else {
+                        TxtPosition.Text = $"Konum: {posX:F2}, {posY:F2}, {posZ:F2} m\n" +
+                                           $"Durum: Tüm hedeflere ulaşıldı / Otopilot beklemede";
+                    }
 
                     // 3. DÖNME (Rotation)
                     ((AxisAngleRotation3D)rocketRotateX.Rotation).Angle = roll * (180.0 / Math.PI); 
@@ -142,21 +151,43 @@ namespace ImuArayuz
                     rocketTranslate.OffsetY = scaledPosY;
                     rocketTranslate.OffsetZ = scaledPosZ;
 
-                    // 5. KAMERA TAKİBİ (CHASE CAMERA)
-                    double dx = scaledPosX - lastPosX;
-                    double dy = scaledPosY - lastPosY;
-                    double dz = scaledPosZ - lastPosZ;
-
+                   // 5. KAMERA TAKİBİ (CHASE CAMERA - KULLANICI DOSTU)
                     if (FollowCamera != null)
                     {
-                        FollowCamera.Position = new Point3D(FollowCamera.Position.X + dx, 
-                                                            FollowCamera.Position.Y + dy, 
-                                                            FollowCamera.Position.Z + dz);
-                    }
+                        if (ChkChaseCam.IsChecked == true)
+                        {
+                            // Kuyruk Kamerası Modu Aktifse: Roketi merkez alarak arkasından takip et
+                            double followDistanceX = -20.0; 
+                            double followDistanceZ = 5.0;
 
-                    lastPosX = scaledPosX;
-                    lastPosY = scaledPosY;
-                    lastPosZ = scaledPosZ;
+                            double yawRad = yaw;
+                            double pitchRad = pitch;
+                            double cosYaw = Math.Cos(yawRad);
+                            double sinYaw = Math.Sin(yawRad);
+                            double cosPitch = Math.Cos(pitchRad);
+
+                            double offsetX = followDistanceX * cosYaw * cosPitch;
+                            double offsetY = followDistanceX * sinYaw * cosPitch;
+                            double offsetZ = followDistanceX * (-Math.Sin(pitchRad)) + followDistanceZ;
+
+                            FollowCamera.Position = new Point3D(scaledPosX + offsetX, scaledPosY + offsetY, scaledPosZ + offsetZ);
+                            FollowCamera.LookDirection = new Vector3D(scaledPosX - FollowCamera.Position.X, scaledPosY - FollowCamera.Position.Y, scaledPosZ - FollowCamera.Position.Z);
+                        }
+                        else
+                        {
+                            // Serbest Mod: Sadece odak noktasını (LookDirection) rokete kilitler, 
+                            // böylece fare ile istediğiniz gibi zoom yapabilir ve etrafında dönebilirsiniz.
+                            Vector3D currentLook = FollowCamera.LookDirection;
+                            Point3D currentPos = FollowCamera.Position;
+                            
+                            double currentDist = currentLook.Length;
+                            Vector3D rocketPosVec = new Vector3D(scaledPosX, scaledPosY, scaledPosZ);
+                            
+                            // Kameranın baktığı merkezi roketin konumuna kaydır
+                            Vector3D camToRocket = rocketPosVec - new Vector3D(currentPos.X, currentPos.Y, currentPos.Z);
+                            FollowCamera.Position = new Point3D(scaledPosX - currentLook.X, scaledPosY - currentLook.Y, scaledPosZ - currentLook.Z);
+                        }
+                    }
 
                     // 6. İZ ÇİZİMİ (Trajectory Trail)
                     if (trailPoints.Count == 0 || 
@@ -177,37 +208,64 @@ namespace ImuArayuz
         }
 
         /// <summary>
-        /// İvmeyi entegre ederek basit doğrusal yörünge simülasyonu yapar
+        /// CSV'den okunan hedefleri 3D uzayda şeffaf balonlar ve merkez noktaları olarak çizer
         /// </summary>
-        private void SimulatePositionLocally(float ax, float ay, float az, float dt, out double pX, out double pY, out double pZ)
+        private void DrawWaypoints(string filePath)
         {
-            // Euler entegrasyonu (İvme -> Hız -> Konum)
-            _velX += ax * dt;
-            _velY += ay * dt;
-            _velZ += az * dt;
+            // Eski senaryonun hedeflerini ekrandan temizle
+            WaypointsVisual.Children.Clear();
 
-            _posX += _velX * dt;
-            _posY += _velY * dt;
-            _posZ += _velZ * dt;
-
-            // --- ZEMİN ÇARPIŞMA (GROUND COLLISION) KONTROLÜ ---
-            // Eğer Z ekseni (Yükseklik) 0'ın (yerin) altına düşerse:
-            if (_posZ < 0)
+            try
             {
-                _posZ = 0;      // Modelin yerin altına girmesini engelle
-                _velZ = 0;      // Düşüş hızını sıfırla (yerde sekme olmasın)
+                string[] lines = System.IO.File.ReadAllLines(filePath);
                 
-                // İsteğe bağlı: Füze yere çarptığında durmasını isterseniz yatay hızları da sıfırlayabilirsiniz:
-                _velX = 0; 
-                _velY = 0;
-            }
-            // ---------------------------------------------------
+                // İlk satır başlık olduğu için 1'den başlıyoruz
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    string line = lines[i].Trim();
+                    if (string.IsNullOrEmpty(line)) continue;
 
-            // Görsel ölçeklendirme (Uzayda kameradan çıkmasın diye pozisyonu ölçeklendiriyoruz, /10 idealdir)
-            pX = _posX / 10.0;
-            pY = _posY / 10.0;
-            pZ = _posZ / 10.0;
+                    string[] parts = line.Split(',');
+                    if (parts.Length >= 3)
+                    {
+                        var inv = System.Globalization.CultureInfo.InvariantCulture;
+                        float x = float.Parse(parts[0], inv);
+                        float y = float.Parse(parts[1], inv);
+                        float z = float.Parse(parts[2], inv);
+
+                        // Simülasyon arayüzündeki /10.0 ölçeklendirmesini uyguluyoruz
+                        double scaledX = x / 10.0;
+                        double scaledY = y / 10.0;
+                        double scaledZ = z / 10.0;
+
+                        // 1. Hedefin Tam Merkezi (Küçük katı yeşil nokta)
+                        SphereVisual3D centerDot = new SphereVisual3D
+                        {
+                            Center = new Point3D(scaledX, scaledY, scaledZ),
+                            Radius = 2.0, // Ekranda görünmesi için 2 birim (20 metre)
+                            Fill = Brushes.LimeGreen
+                        };
+
+                        // 2. Hedef Tolerans Balonu (200 Metre Yarıçaplı Şeffaf Yeşil Küre)
+                        // Gerçekte 200m olan toleransımız, /10 ölçekle 20 birim yarıçapa denk gelir.
+                        SphereVisual3D toleranceBubble = new SphereVisual3D
+                        {
+                            Center = new Point3D(scaledX, scaledY, scaledZ),
+                            Radius = 20.0, 
+                            Fill = new SolidColorBrush(Color.FromArgb(15, 0, 255, 0)) // %15 Opaklık (Şeffaf Yeşil)
+                        };
+
+                        WaypointsVisual.Children.Add(centerDot);
+                        WaypointsVisual.Children.Add(toleranceBubble);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Hedefler ekrana çizilirken hata oluştu: " + ex.Message);
+            }
         }
+
         private void LoadScenario_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
@@ -219,6 +277,9 @@ namespace ImuArayuz
                 {
                     // Senaryo dosyasını yükle
                     simManager.LoadCsv(openFileDialog.FileName);
+
+                    DrawWaypoints(openFileDialog.FileName);
+
                     TxtScenarioStatus.Text = $"Durum: {System.IO.Path.GetFileName(openFileDialog.FileName)} Yüklendi";
                     TxtScenarioStatus.Foreground = new SolidColorBrush(Colors.Green);
 
@@ -246,11 +307,9 @@ namespace ImuArayuz
                     if (aeroLift < 0) aeroLift = 0.0f;
 
                     // Sistemi sıfırla ve başlat
-                    _velX = _velY = _velZ = 0;
-                    _posX = _posY = _posZ = 0;
                     trailPoints.Clear();
 
-                    // YENİ: Yeni parametrelerle birlikte StartSimulation çağrısı
+                    // Yeni parametrelerle birlikte StartSimulation çağrısı
                     simManager.StartSimulation(mass, ixx, iyy, izz, linDamp, angDamp, aeroStab, aeroDamp, aeroLift);
                     
                     // Simülasyon kapalıysa otomatik başlat
@@ -347,5 +406,22 @@ namespace ImuArayuz
             try { PhysicsEngineAPI.sim_close(); } catch { }
             base.OnClosed(e);
         }
+        private void Fullscreen_Click(object sender, RoutedEventArgs e)
+        {
+            isFullscreen = !isFullscreen;
+
+            if (isFullscreen)
+            {
+                lastColumnWidth = RootGrid.ColumnDefinitions[0].Width;
+                RootGrid.ColumnDefinitions[0].Width = new GridLength(0); // Sol paneli tamamen gizle
+                BtnFullscreen.Content = "🗗 Normal Boyut";
+            }
+            else
+            {
+                RootGrid.ColumnDefinitions[0].Width = lastColumnWidth; // Sol paneli geri getir
+                BtnFullscreen.Content = "⛶ Tam Ekran";
+            }
+        }
     }
+       
 }

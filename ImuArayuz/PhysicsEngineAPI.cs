@@ -32,8 +32,7 @@ public static class PhysicsEngineAPI {
                                                   float aero_stab, float aero_damp, float aero_lift);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void sim_api_set_applied_forces(float fx, float fy, float fz, 
-                                                         float tx, float ty, float tz);
+    public static extern void sim_api_set_waypoint(float x, float y, float z);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void sim_step_auto(float elapsed_time_s, 

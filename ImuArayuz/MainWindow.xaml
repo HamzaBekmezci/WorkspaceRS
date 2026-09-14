@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:hx="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
         Title="IMU Simülasyon Kontrol Paneli" Height="820" Width="950">
-    <Grid Margin="15">
+    <Grid x:Name="RootGrid" Margin="15">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1.2*"/>
             <ColumnDefinition Width="*"/>
@@ -110,7 +110,7 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Sağ Taraf: 3D Görselleştirme (Helix Toolkit) -->
+<!-- Sağ Taraf: 3D Görselleştirme (Helix Toolkit) -->
         <Grid Grid.Column="1" Margin="10,0,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -118,24 +118,23 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="Uzay Yörüngesi ve AIM-9 Yönelimi (6-DOF)" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+            <!-- YENİ: Başlık, Tam Ekran Butonu ve Kamera Checkbox -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0,0,0,10">
+                <TextBlock Text="Uzay Yörüngesi ve AIM-9 Yönelimi (6-DOF)" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                <Button x:Name="BtnFullscreen" Content="⛶ Tam Ekran" Width="110" Height="25" HorizontalAlignment="Right" Margin="20,0,0,0" Click="Fullscreen_Click"/>
+                <CheckBox x:Name="ChkChaseCam" Content="Kuyruk Kamerası" Foreground="White" VerticalAlignment="Center" Margin="15,0,0,0" IsChecked="True"/>
+            </StackPanel>
 
             <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="0,0,0,10" Background="#1E1E1E">
-                <!-- Helix Toolkit Viewport'u kullanıyoruz -->
                 <hx:HelixViewport3D x:Name="ViewportTrajectory" ShowCoordinateSystem="True" ZoomExtentsWhenLoaded="True">
-    
-                    <!-- YENİ EKLENEN: Kamerayı açıkça tanımlıyoruz -->
-                  <hx:HelixViewport3D.Camera>
-                        <!-- Position: Kameranın uzayda durduğu yer (Yukarıdan, yandan ve önden bakış açısı) -->
-                        <!-- LookDirection: Kameranın baktığı merkez nokta (0,0,0 noktasına bakar) -->
+                    <hx:HelixViewport3D.Camera>
                         <PerspectiveCamera x:Name="FollowCamera" Position="20, 20, 20" LookDirection="-20, -20, -20" UpDirection="0,0,1"/>
-                  </hx:HelixViewport3D.Camera>
-
+                    </hx:HelixViewport3D.Camera>
                     <hx:DefaultLights/>
-                    
                     <ModelVisual3D x:Name="RocketVisual"/>
                     <hx:LinesVisual3D x:Name="TrajectoryTrail" Color="Red" Thickness="2"/>
                     <hx:GridLinesVisual3D Length="500" Width="500" MajorDistance="100" MinorDistance="1" Thickness="0.01"/>
+                    <ModelVisual3D x:Name="WaypointsVisual"/>
                 </hx:HelixViewport3D>
             </Border>
 

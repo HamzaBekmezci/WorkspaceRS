@@ -4,7 +4,5 @@
 			"path": "."
 		}
 	],
-	"settings": {
-		"cmake.generator": "Ninja"
-	}
+	"settings": {}
 }

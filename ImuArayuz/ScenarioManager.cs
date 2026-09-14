@@ -4,48 +4,65 @@ using System.Globalization;
 using System.IO;
 
 public class ScenarioManager {
-    private List<ScenarioEvent> _events = new List<ScenarioEvent>();
-    private float _simTime = 0.0f;
+    // Waypoint'leri (Hedefleri) sırayla tutacak kuyruk yapısı
+    private Queue<ScenarioEvent> _waypoints = new Queue<ScenarioEvent>();
+    private ScenarioEvent? _currentWaypoint;
+    private bool _hasActiveWaypoint = false;
     private bool _isRunning = false;
+ 
+    public bool HasActiveWaypoint => _hasActiveWaypoint;
+    public float TargetX => _hasActiveWaypoint && _currentWaypoint != null ? _currentWaypoint.TargetX : 0;
+    public float TargetY => _hasActiveWaypoint && _currentWaypoint != null ? _currentWaypoint.TargetY : 0;
+    public float TargetZ => _hasActiveWaypoint && _currentWaypoint != null ? _currentWaypoint.TargetZ : 0;
+    public string CurrentTargetName => (_hasActiveWaypoint && _currentWaypoint != null) 
+                                       ? (_currentWaypoint.Description ?? "İsimsiz Hedef") 
+                                       : "Görev Bitti";
 
     public void LoadCsv(string filePath) {
-        _events.Clear();
+        _waypoints.Clear();
+        _hasActiveWaypoint = false;
         string[] lines = File.ReadAllLines(filePath);
 
-        // İlk satır başlık olduğu için i = 1'den başlıyoruz
+        // İlk satır başlık (X, Y, Z, Açıklama) varsayıyoruz. i=1'den başla.
         for (int i = 1; i < lines.Length; i++) {
             string line = lines[i].Trim();
             if (string.IsNullOrEmpty(line)) continue;
 
             string[] parts = line.Split(',');
-            if (parts.Length >= 8) {
-                _events.Add(new ScenarioEvent {
-                    StartTime = float.Parse(parts[0], CultureInfo.InvariantCulture),
-                    EndTime   = float.Parse(parts[1], CultureInfo.InvariantCulture),
-                    Fx        = float.Parse(parts[2], CultureInfo.InvariantCulture),
-                    Fy        = float.Parse(parts[3], CultureInfo.InvariantCulture),
-                    Fz        = float.Parse(parts[4], CultureInfo.InvariantCulture),
-                    Tx        = float.Parse(parts[5], CultureInfo.InvariantCulture),
-                    Ty        = float.Parse(parts[6], CultureInfo.InvariantCulture),
-                    Tz        = float.Parse(parts[7], CultureInfo.InvariantCulture),
-                    Description = parts.Length > 8 ? parts[8] : ""
+            if (parts.Length >= 3) {
+                _waypoints.Enqueue(new ScenarioEvent {
+                    TargetX = float.Parse(parts[0], CultureInfo.InvariantCulture),
+                    TargetY = float.Parse(parts[1], CultureInfo.InvariantCulture),
+                    TargetZ = float.Parse(parts[2], CultureInfo.InvariantCulture),
+                    Description = parts.Length > 3 ? parts[3] : ""
                 });
             }
         }
     }
 
-    // YENİ EKLENEN AERODİNAMİK PARAMETRELER (aeroStab, aeroDamp, aeroLift)
     public void StartSimulation(float mass, float ixx, float iyy, float izz, 
                                 float linDamp, float angDamp, 
                                 float aeroStab, float aeroDamp, float aeroLift) {
         
         PhysicsEngineAPI.sim_init();
-        
-        // Güncellenmiş API çağrısı
         PhysicsEngineAPI.sim_api_set_body_params(mass, ixx, iyy, izz, linDamp, angDamp, aeroStab, aeroDamp, aeroLift);
         
-        _simTime = 0.0f;
+        // İlk hedef noktayı çek ve DLL'e yolla
+        GetNextWaypoint();
+
         _isRunning = true;
+    }
+
+    private void GetNextWaypoint() {
+        if (_waypoints.Count > 0) {
+            _currentWaypoint = _waypoints.Dequeue();
+            _hasActiveWaypoint = true;
+            // Otopilota yeni hedefi bildir!
+            PhysicsEngineAPI.sim_api_set_waypoint(_currentWaypoint.TargetX, _currentWaypoint.TargetY, _currentWaypoint.TargetZ);
+        } else {
+            _hasActiveWaypoint = false;
+            // İsterseniz görev bitince DLL'e (0,0,0) yollayabilir veya otopilotu kapattırabilirsiniz.
+        }
     }
 
     public void UpdateStep(float dt, 
@@ -59,27 +76,20 @@ public class ScenarioManager {
         
         if (!_isRunning) return;
 
-        float netFx = 0, netFy = 0, netFz = 0;
-        float netTx = 0, netTy = 0, netTz = 0;
-
-        foreach (var ev in _events) {
-            if (_simTime >= ev.StartTime && _simTime < ev.EndTime) {
-                netFx += ev.Fx;
-                netFy += ev.Fy;
-                netFz += ev.Fz;
-                netTx += ev.Tx;
-                netTy += ev.Ty;
-                netTz += ev.Tz;
-            }
-        }
-
-        PhysicsEngineAPI.sim_api_set_applied_forces(netFx, netFy, netFz, netTx, netTy, netTz);
-        
-        // Artık gx, gy, gz yerine doğrudan roll, pitch, yaw çıkışlarını alıyoruz
         PhysicsEngineAPI.sim_step_auto(dt, out ax, out ay, out az, 
                                     out roll, out pitch, out yaw,
                                     out posX, out posY, out posZ);
 
-        _simTime += dt;
+        if (_hasActiveWaypoint) {
+            // '!' operatörü null uyarılarını engeller. Tolerans 15.0f olarak korundu.
+            float dx = _currentWaypoint!.TargetX - posX;
+            float dy = _currentWaypoint!.TargetY - posY;
+            float dz = _currentWaypoint!.TargetZ - posZ;
+            float distanceToTarget = (float)Math.Sqrt(dx*dx + dy*dy + dz*dz);
+
+            if (distanceToTarget < 200.0f) {
+                GetNextWaypoint();
+            }
+        }
     }
 }
